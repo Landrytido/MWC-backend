@@ -1,6 +1,5 @@
 package com.mywebcompanion.backendspring.repository;
 
-import com.mywebcompanion.backendspring.model.SavedLink;
 import com.mywebcompanion.backendspring.model.SavedLinkGroup;
 import com.mywebcompanion.backendspring.model.SavedLinkGroupId;
 import org.springframework.data.jpa.repository.JpaRepository;

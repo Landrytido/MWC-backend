@@ -5,7 +5,6 @@ import com.mywebcompanion.backendspring.dto.SavedLinkGroupDto;
 import com.mywebcompanion.backendspring.model.LinkGroup;
 import com.mywebcompanion.backendspring.model.User;
 import com.mywebcompanion.backendspring.repository.LinkGroupRepository;
-import com.mywebcompanion.backendspring.repository.SavedLinkGroupRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +18,6 @@ import java.util.stream.Collectors;
 public class LinkGroupService {
 
     private final LinkGroupRepository linkGroupRepository;
-    private final SavedLinkGroupRepository savedLinkGroupRepository;
     private final UserService userService;
     private final SavedLinkGroupService savedLinkGroupService;
 
