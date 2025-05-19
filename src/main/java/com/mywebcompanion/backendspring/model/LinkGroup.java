@@ -10,16 +10,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "saved_links")
+@Table(name = "link_groups")
 @Data
-public class SavedLink {
+public class LinkGroup {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false)
-    private String url;
+    private String id; // UUID comme dans Prisma
 
     @Column(nullable = false)
     private String title;
@@ -31,7 +27,7 @@ public class SavedLink {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @OneToMany(mappedBy = "savedLink", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "linkGroup", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SavedLinkGroup> savedLinkGroups = new ArrayList<>();
 
     @CreationTimestamp
@@ -39,4 +35,11 @@ public class SavedLink {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    private void generateId() {
+        if (this.id == null) {
+            this.id = java.util.UUID.randomUUID().toString();
+        }
+    }
 }
