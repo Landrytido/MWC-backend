@@ -1,20 +1,14 @@
-### ===========================================
 ### MY WEB COMPANION - API TESTS
-### ===========================================
 
-### Variables
 @baseUrl = http://localhost:8080
-@authToken = Bearer YOUR_JWT_TOKEN_HERE
+@authToken = Bearer eyJhbGciOiJSUzI1NiIsImNhdCI6ImNsX0I3ZDRQRDExMUFBQSIsImtpZCI6Imluc18yd1Jsb2hkRWJnOThFTlpYcFJEaVNtcmlQUWUiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJodHRwOi8vbG9jYWxob3N0OjUxNzMiLCJleHAiOjE3NDc2MzIzNzUsImZ2YSI6WzAsLTFdLCJpYXQiOjE3NDc2MzIzMTUsImlzcyI6Imh0dHBzOi8vbXVzaWNhbC1zYWxtb24tNjYuY2xlcmsuYWNjb3VudHMuZGV2IiwibmJmIjoxNzQ3NjMyMzA1LCJzaWQiOiJzZXNzXzJ4SWoweG9PWEdOcVNaR3VpQk83dnh2YnREcyIsInN1YiI6InVzZXJfMnd4T01zRDFpVHVKanJONVdGV0NNaUtlZDVEIiwidiI6Mn0.ASgWayfs35UOjeuZeJCP1L7Jn7PKb4gkde181cIKdGELKNdmg6OH3UhVWsygxsy2dfs3qmAxP6Jwv1LYBU_85Gzto4dgnqvHzwGHMdCMcEUQ2j7bTrFrY7ooD81PqunV31i9d6Hby2g5QcLoSwYFQwWLOgPyAcEo0qz3fUA9dzN4I_wf-o3PZ_Db4TsOmA9wQQMexvKluuYkDqmNoeugrkAEjIcu8Uc3hht6JNCcLZe6hCNxpm9l7gAMY0TlptAO5CPl-SwoTUGZEYXlTS929MK97aPH9KBYSZ_87kVYX9xJgnVM1vCCoeeNcvRgXBlHSHsIE7l3LF9X3boVXe_CjA
+ 
 
-### ===========================================
 ### AUTH - GET USER PROFILE
-### ===========================================
 GET {{baseUrl}}/api/users/profile
 Authorization: {{authToken}}
 
-### ===========================================
 ### LABELS API
-### ===========================================
 
 ### Get all labels
 GET {{baseUrl}}/api/labels
@@ -46,9 +40,7 @@ Authorization: {{authToken}}
 DELETE {{baseUrl}}/api/labels/LABEL_ID_HERE?forceDelete=true
 Authorization: {{authToken}}
 
-### ===========================================
 ### NOTEBOOKS API
-### ===========================================
 
 ### Get all notebooks
 GET {{baseUrl}}/api/notebooks
@@ -80,9 +72,7 @@ Authorization: {{authToken}}
 GET {{baseUrl}}/api/notes/notebooks/1/notes
 Authorization: {{authToken}}
 
-### ===========================================
 ### NOTES API
-### ===========================================
 
 ### Get all notes
 GET {{baseUrl}}/api/notes
@@ -140,9 +130,7 @@ Content-Type: application/json
 DELETE {{baseUrl}}/api/notes/1
 Authorization: {{authToken}}
 
-### ===========================================
 ### BLOC NOTES API
-### ===========================================
 
 ### Get bloc note
 GET {{baseUrl}}/api/bloc-note
@@ -161,9 +149,7 @@ Content-Type: application/json
 DELETE {{baseUrl}}/api/bloc-note
 Authorization: {{authToken}}
 
-### ===========================================
 ### COMMENTS API
-### ===========================================
 
 ### Get comments for a note
 GET {{baseUrl}}/api/comments/notes/1
@@ -195,9 +181,7 @@ Authorization: {{authToken}}
 GET {{baseUrl}}/api/comments/my-comments
 Authorization: {{authToken}}
 
-### ===========================================
 ### TASKS API
-### ===========================================
 
 ### Get all tasks
 GET {{baseUrl}}/api/tasks
@@ -254,9 +238,7 @@ Authorization: {{authToken}}
 GET {{baseUrl}}/api/tasks/pending/count
 Authorization: {{authToken}}
 
-### ===========================================
 ### DAILY TASKS API
-### ===========================================
 
 ### Get daily tasks for today
 GET {{baseUrl}}/api/daily-tasks
@@ -319,9 +301,7 @@ Authorization: {{authToken}}
 GET {{baseUrl}}/api/daily-tasks/report/monthly?year=2025&month=5
 Authorization: {{authToken}}
 
-### ===========================================
 ### NOTE TASKS API
-### ===========================================
 
 ### Get tasks for a note
 GET {{baseUrl}}/api/note-tasks/notes/1
@@ -371,9 +351,7 @@ Authorization: {{authToken}}
 DELETE {{baseUrl}}/api/note-tasks/1
 Authorization: {{authToken}}
 
-### ===========================================
 ### SAVED LINKS API (EXISTING)
-### ===========================================
 
 ### Get all saved links
 GET {{baseUrl}}/api/links
