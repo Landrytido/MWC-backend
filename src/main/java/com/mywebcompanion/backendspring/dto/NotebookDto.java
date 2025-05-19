@@ -5,10 +5,12 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class NoteDto {
+public class NotebookDto {
     private Long id;
     private String title;
-    private String content;
     private LocalDateTime createdAt;
-    private Long commentCount;
+    private LocalDateTime updatedAt;
+
+    // Nombre de notes dans ce carnet
+    private Long noteCount;
 }

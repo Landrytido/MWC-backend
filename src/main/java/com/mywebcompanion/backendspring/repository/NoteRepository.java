@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface NoteRepository extends JpaRepository<Note, Long> {
     List<Note> findByUserClerkIdOrderByCreatedAtDesc(String clerkId);
+
+    List<Note> findByNotebookIdOrderByCreatedAtDesc(Long notebookId);
 }

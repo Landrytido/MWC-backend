@@ -46,4 +46,36 @@ public class NoteController {
         noteService.deleteNote(clerkId, id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/notebooks/{notebookId}")
+    public ResponseEntity<NoteDto> createNoteInNotebook(
+            Authentication authentication,
+            @PathVariable Long notebookId,
+            @RequestBody NoteDto noteDto) {
+        String clerkId = authentication.getName();
+        NoteDto createdNote = noteService.createNoteInNotebook(clerkId, noteDto, notebookId);
+        return ResponseEntity.ok(createdNote);
+    }
+
+    @PutMapping("/{id}/notebook")
+    public ResponseEntity<NoteDto> moveNoteToNotebook(
+            Authentication authentication,
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> request) {
+        String clerkId = authentication.getName();
+        Long notebookId = request.get("notebookId") != null
+                ? Long.valueOf(request.get("notebookId").toString())
+                : null;
+        NoteDto updatedNote = noteService.moveNoteToNotebook(clerkId, id, notebookId);
+        return ResponseEntity.ok(updatedNote);
+    }
+
+    @GetMapping("/notebooks/{notebookId}/notes")
+    public ResponseEntity<List<NoteDto>> getNotesByNotebook(
+            Authentication authentication,
+            @PathVariable Long notebookId) {
+        String clerkId = authentication.getName();
+        List<NoteDto> notes = noteService.getNotesByNotebookId(clerkId, notebookId);
+        return ResponseEntity.ok(notes);
+    }
 }

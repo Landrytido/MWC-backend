@@ -5,10 +5,12 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class NoteDto {
+public class CommentDto {
     private Long id;
-    private String title;
     private String content;
+    private Long noteId;
     private LocalDateTime createdAt;
-    private Long commentCount;
+
+    // Informations sur l'auteur du commentaire
+    private UserDto author;
 }
