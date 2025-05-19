@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -31,12 +30,19 @@ public class Note {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "notebook_id")
+    private Notebook notebook;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "note_labels", joinColumns = @JoinColumn(name = "note_id"), inverseJoinColumns = @JoinColumn(name = "label_id"))
     private Set<Label> labels = new HashSet<>();
 
     @OneToMany(mappedBy = "note", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "note", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<NoteTask> noteTasks = new ArrayList<>();
 
     @CreationTimestamp
     private LocalDateTime createdAt;

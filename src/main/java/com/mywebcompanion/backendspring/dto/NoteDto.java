@@ -11,4 +11,8 @@ public class NoteDto {
     private String content;
     private LocalDateTime createdAt;
     private Long commentCount;
+    private Long taskCount;
+    private Long completedTaskCount;
+    private Long notebookId;
+    private String notebookTitle;
 }

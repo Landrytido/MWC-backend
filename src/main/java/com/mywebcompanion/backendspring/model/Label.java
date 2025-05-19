@@ -10,7 +10,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "labels")
+@Table(name = "labels", uniqueConstraints = {
+        @UniqueConstraint(columnNames = { "name", "user_id" })
+})
 @Data
 public class Label {
 
@@ -33,13 +35,6 @@ public class Label {
     // Relation Many-to-Many avec Note
     @ManyToMany(mappedBy = "labels")
     private Set<Note> notes = new HashSet<>();
-
-    // Contrainte unique sur (name, user) au niveau base de données
-    @Table(uniqueConstraints = {
-            @UniqueConstraint(columnNames = { "name", "user_id" })
-    })
-    static class UniqueConstraint {
-    }
 
     @PrePersist
     private void generateId() {

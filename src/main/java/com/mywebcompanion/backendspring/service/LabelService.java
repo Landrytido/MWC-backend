@@ -22,7 +22,7 @@ public class LabelService {
 
     public List<LabelDto> getAllLabelsByUserId(String clerkId) {
         User user = userService.findByClerkId(clerkId);
-        return labelRepository.findByUserIdOrderByNameAsc(user.getId())
+        return labelRepository.findByUserIdOrderByNameAsc(user.getId().intValue())
                 .stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
@@ -32,7 +32,7 @@ public class LabelService {
         User user = userService.findByClerkId(clerkId);
 
         // Vérifier si le label existe déjà
-        if (labelRepository.findByNameAndUserId(name, user.getId()).isPresent()) {
+        if (labelRepository.findByNameAndUserId(name, user.getId().intValue()).isPresent()) {
             throw new RuntimeException("Un label avec ce nom existe déjà");
         }
 
@@ -60,7 +60,7 @@ public class LabelService {
         }
 
         // Vérifier si un autre label avec ce nom existe
-        labelRepository.findByNameAndUserId(name, user.getId())
+        labelRepository.findByNameAndUserId(name, user.getId().intValue())
                 .ifPresent(existingLabel -> {
                     if (!existingLabel.getId().equals(labelId)) {
                         throw new RuntimeException("Un label avec ce nom existe déjà");

@@ -6,11 +6,9 @@ import com.mywebcompanion.backendspring.model.Notebook;
 import com.mywebcompanion.backendspring.model.User;
 import com.mywebcompanion.backendspring.repository.CommentRepository;
 import com.mywebcompanion.backendspring.repository.NoteRepository;
+import com.mywebcompanion.backendspring.repository.NoteTaskRepository;
 import com.mywebcompanion.backendspring.repository.NotebookRepository;
-
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,11 +20,9 @@ public class NoteService {
 
     private final NoteRepository noteRepository;
     private final UserService userService;
-
-    @Autowired
-    private NotebookRepository notebookRepository;
-    @Autowired
-    private CommentRepository commentRepository;
+    private final NotebookRepository notebookRepository;
+    private final CommentRepository commentRepository;
+    private final NoteTaskRepository noteTaskRepository;
 
     public List<NoteDto> getNotesByClerkId(String clerkId) {
         return noteRepository.findByUserClerkIdOrderByCreatedAtDesc(clerkId)
@@ -75,17 +71,7 @@ public class NoteService {
         noteRepository.delete(note);
     }
 
-    private NoteDto convertToDto(Note note) {
-        NoteDto dto = new NoteDto();
-        dto.setId(note.getId());
-        dto.setTitle(note.getTitle());
-        dto.setContent(note.getContent());
-        dto.setCreatedAt(note.getCreatedAt());
-        dto.setCommentCount(commentRepository.countByNoteId(note.getId()));
-
-        return dto;
-    }
-
+    // Méthode pour créer une note dans un carnet spécifique
     public NoteDto createNoteInNotebook(String clerkId, NoteDto noteDto, Long notebookId) {
         User user = userService.findByClerkId(clerkId);
 
@@ -105,6 +91,7 @@ public class NoteService {
         return convertToDto(savedNote);
     }
 
+    // Méthode pour déplacer une note vers un carnet
     public NoteDto moveNoteToNotebook(String clerkId, Long noteId, Long notebookId) {
         Note note = noteRepository.findById(noteId)
                 .orElseThrow(() -> new RuntimeException("Note not found"));
@@ -126,6 +113,7 @@ public class NoteService {
         return convertToDto(updatedNote);
     }
 
+    // Méthode pour obtenir les notes d'un carnet
     public List<NoteDto> getNotesByNotebookId(String clerkId, Long notebookId) {
         // Vérifier que le carnet appartient à l'utilisateur
         notebookRepository.findByIdAndUserClerkId(notebookId, clerkId)
@@ -135,5 +123,27 @@ public class NoteService {
                 .stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
+    }
+
+    private NoteDto convertToDto(Note note) {
+        NoteDto dto = new NoteDto();
+        dto.setId(note.getId());
+        dto.setTitle(note.getTitle());
+        dto.setContent(note.getContent());
+        dto.setCreatedAt(note.getCreatedAt());
+
+        if (note.getNotebook() != null) {
+            dto.setNotebookId(note.getNotebook().getId());
+            dto.setNotebookTitle(note.getNotebook().getTitle());
+        }
+        // Ajouter le nombre de commentaires (SUPPRESSION DU DOUBLON)
+        dto.setCommentCount(commentRepository.countByNoteId(note.getId()));
+
+        // Ajouter le nombre de tâches
+        dto.setCommentCount(commentRepository.countByNoteId(note.getId()));
+        dto.setTaskCount(noteTaskRepository.countByNoteId(note.getId()));
+        dto.setCompletedTaskCount(noteTaskRepository.countByNoteIdAndCompletedTrue(note.getId()));
+
+        return dto;
     }
 }
