@@ -17,7 +17,8 @@ public class BlocNoteService {
     private final UserService userService;
 
     public BlocNoteDto getBlocNoteByClerkId(String clerkId) {
-        BlocNote blocNote = blocNoteRepository.findByUserClerkId(clerkId)
+        // OPTIMISATION: Une seule requête avec JOIN FETCH
+        BlocNote blocNote = blocNoteRepository.findByUserClerkIdWithUser(clerkId)
                 .orElse(null);
 
         if (blocNote == null) {
@@ -29,7 +30,8 @@ public class BlocNoteService {
     }
 
     public BlocNoteDto upsertBlocNote(String clerkId, String content) {
-        BlocNote blocNote = blocNoteRepository.findByUserClerkId(clerkId)
+        // OPTIMISATION: Utiliser la requête optimisée
+        BlocNote blocNote = blocNoteRepository.findByUserClerkIdWithUser(clerkId)
                 .orElse(null);
 
         if (blocNote == null) {
@@ -49,12 +51,15 @@ public class BlocNoteService {
     }
 
     public void deleteBlocNote(String clerkId) {
-        BlocNote blocNote = blocNoteRepository.findByUserClerkId(clerkId)
-                .orElseThrow(() -> new RuntimeException("Bloc-note non trouvé"));
+        // OPTIMISATION: Vérifier d'abord l'existence puis supprimer
+        if (!blocNoteRepository.existsByUserClerkId(clerkId)) {
+            throw new RuntimeException("Bloc-note non trouvé");
+        }
 
-        blocNoteRepository.delete(blocNote);
+        blocNoteRepository.deleteByUserClerkId(clerkId);
     }
 
+    // OPTIMISATION: Cache le user lors de la création
     private BlocNoteDto createEmptyBlocNote(String clerkId) {
         User user = userService.findByClerkId(clerkId);
 
