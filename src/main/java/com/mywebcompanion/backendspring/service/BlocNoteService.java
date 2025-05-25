@@ -17,7 +17,9 @@ public class BlocNoteService {
     private final UserService userService;
 
     public BlocNoteDto getBlocNoteByClerkId(String clerkId) {
-        // OPTIMISATION: Une seule requête avec JOIN FETCH
+        System.out.println("🚨🚨🚨 getBlocNoteByClerkId appelée pour: " + clerkId);
+        System.out.println("🚨🚨🚨 Stack trace:");
+        Thread.dumpStack();
         BlocNote blocNote = blocNoteRepository.findByUserClerkIdWithUser(clerkId)
                 .orElse(null);
 

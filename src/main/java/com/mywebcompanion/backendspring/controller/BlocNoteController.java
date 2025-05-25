@@ -19,6 +19,7 @@ public class BlocNoteController {
     @GetMapping
     public ResponseEntity<BlocNoteDto> getBlocNote(Authentication authentication) {
         String clerkId = authentication.getName();
+        System.out.println("🔍 Controller getBlocNote appelé pour: " + clerkId);
         BlocNoteDto blocNote = blocNoteService.getBlocNoteByClerkId(clerkId);
         return ResponseEntity.ok(blocNote);
     }

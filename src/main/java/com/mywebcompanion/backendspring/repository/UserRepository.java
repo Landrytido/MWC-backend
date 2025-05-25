@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    @Cacheable(value = "users", key = "#clerkId")
+    // @Cacheable(value = "users", key = "#clerkId")
     Optional<User> findByClerkId(String clerkId);
 
     Optional<User> findByEmail(String email);

@@ -25,6 +25,8 @@ public class UserService {
     }
 
     public User findByClerkId(String clerkId) {
+        System.out.println("🚨🚨🚨 UserService.findByClerkId - clerkId: " + clerkId);
+        Thread.dumpStack();
         return userRepository.findByClerkId(clerkId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
