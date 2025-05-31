@@ -3,6 +3,7 @@ package com.mywebcompanion.backendspring.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -13,6 +14,9 @@ import java.util.List;
 @Entity
 @Table(name = "users")
 @Data
+@ToString(exclude = { "notes", "links", "notebooks", "blocNote", "comments", "tasks",
+        "dailyPlans", "dailyTasks", "dailyTaskHistory", "noteTasks",
+        "linkGroups", "files" }) // Éviter les boucles dans toString
 public class User {
 
     @Id
@@ -28,7 +32,7 @@ public class User {
     private String firstName;
     private String lastName;
 
-    // ✅ SOLUTION: Forcer LAZY sur toutes les relations et ajouter @JsonIgnore
+    // 🔧 CORRECTION: Toutes les relations OneToMany en LAZY + @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Note> notes = new ArrayList<>();
@@ -41,7 +45,7 @@ public class User {
     @JsonIgnore
     private List<Notebook> notebooks = new ArrayList<>();
 
-    // ⚠️ CRITIQUE: OneToOne est EAGER par défaut, il faut forcer LAZY
+    // 🔧 CORRECTION: OneToOne OBLIGATOIREMENT en LAZY
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
     private BlocNote blocNote;

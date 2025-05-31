@@ -22,7 +22,6 @@ public class SavedLinkGroupController {
     public ResponseEntity<List<SavedLinkGroupDto>> getLinksInGroup(
             Authentication authentication,
             @PathVariable String groupId) {
-        String clerkId = authentication.getName();
         List<SavedLinkGroupDto> links = savedLinkGroupService.getLinksByGroupId(groupId);
         return ResponseEntity.ok(links);
     }

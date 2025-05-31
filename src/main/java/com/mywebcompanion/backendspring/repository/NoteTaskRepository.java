@@ -6,36 +6,48 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface NoteTaskRepository extends JpaRepository<NoteTask, Long> {
 
-    // Trouver toutes les tâches d'une note (seulement les tâches parentes)
     List<NoteTask> findByNoteIdAndParentIsNullOrderByCreatedAtAsc(Long noteId);
 
-    // Trouver toutes les tâches d'un utilisateur
     List<NoteTask> findByUserClerkIdOrderByCreatedAtDesc(String clerkId);
 
-    // Trouver toutes les tâches non complétées d'un utilisateur
     List<NoteTask> findByUserClerkIdAndCompletedFalseOrderByCreatedAtDesc(String clerkId);
 
-    // Trouver une tâche par ID et utilisateur (sécurité)
     Optional<NoteTask> findByIdAndUserClerkId(Long id, String clerkId);
 
-    // Compter les tâches d'une note
     Long countByNoteId(Long noteId);
 
-    // Compter les tâches complétées d'une note
     Long countByNoteIdAndCompletedTrue(Long noteId);
 
-    // Compter les sous-tâches d'une tâche parent
+    @Query("SELECT nt.note.id, COUNT(nt) FROM NoteTask nt WHERE nt.note.id IN :noteIds GROUP BY nt.note.id")
+    List<Object[]> countTasksByNoteIds(@Param("noteIds") List<Long> noteIds);
+
+    @Query("SELECT nt.note.id, COUNT(nt) FROM NoteTask nt WHERE nt.note.id IN :noteIds AND nt.completed = true GROUP BY nt.note.id")
+    List<Object[]> countCompletedTasksByNoteIds(@Param("noteIds") List<Long> noteIds);
+
+    default Map<Long, Long> findTaskCountsByNoteIds(List<Long> noteIds) {
+        return countTasksByNoteIds(noteIds).stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]));
+    }
+
+    default Map<Long, Long> findCompletedTaskCountsByNoteIds(List<Long> noteIds) {
+        return countCompletedTasksByNoteIds(noteIds).stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]));
+    }
+
     @Query("SELECT COUNT(nt) FROM NoteTask nt WHERE nt.parent.id = :parentId")
     Long countSubtasksByParentId(@Param("parentId") Long parentId);
 
-    // Compter les sous-tâches complétées d'une tâche parent
     @Query("SELECT COUNT(nt) FROM NoteTask nt WHERE nt.parent.id = :parentId AND nt.completed = true")
     Long countCompletedSubtasksByParentId(@Param("parentId") Long parentId);
 
-    // Supprimer une tâche par ID et utilisateur (sécurité)
     void deleteByIdAndUserClerkId(Long id, String clerkId);
 }

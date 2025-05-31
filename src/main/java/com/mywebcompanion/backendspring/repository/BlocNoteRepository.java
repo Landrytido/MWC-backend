@@ -9,10 +9,12 @@ import java.util.Optional;
 
 public interface BlocNoteRepository extends JpaRepository<BlocNote, Long> {
 
-    @Query("SELECT bn FROM BlocNote bn JOIN FETCH bn.user u WHERE u.clerkId = :clerkId")
-    Optional<BlocNote> findByUserClerkIdWithUser(@Param("clerkId") String clerkId);
+    @Query("SELECT bn FROM BlocNote bn WHERE bn.user.clerkId = :clerkId")
+    Optional<BlocNote> findByUserClerkId(@Param("clerkId") String clerkId);
 
-    boolean existsByUserClerkId(String clerkId);
+    @Query("SELECT COUNT(bn) > 0 FROM BlocNote bn WHERE bn.user.clerkId = :clerkId")
+    boolean existsByUserClerkId(@Param("clerkId") String clerkId);
 
-    void deleteByUserClerkId(String clerkId);
+    @Query("DELETE FROM BlocNote bn WHERE bn.user.clerkId = :clerkId")
+    void deleteByUserClerkId(@Param("clerkId") String clerkId);
 }

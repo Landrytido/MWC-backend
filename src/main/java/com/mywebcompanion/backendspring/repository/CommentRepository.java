@@ -6,23 +6,29 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-    // Trouver tous les commentaires d'une note, triés par date de création
     List<Comment> findByNoteIdOrderByCreatedAtAsc(Long noteId);
 
-    // Trouver tous les commentaires d'un utilisateur
     List<Comment> findByUserClerkIdOrderByCreatedAtDesc(String clerkId);
 
-    // Trouver un commentaire par ID avec vérification de propriétaire
     @Query("SELECT c FROM Comment c WHERE c.id = :commentId AND (c.user.clerkId = :clerkId OR c.note.user.clerkId = :clerkId)")
     Optional<Comment> findByIdAndUserCanAccess(@Param("commentId") Long commentId, @Param("clerkId") String clerkId);
 
-    // Compter les commentaires d'une note
     Long countByNoteId(Long noteId);
 
-    // Vérifier si un utilisateur peut modifier un commentaire (il en est l'auteur)
+    @Query("SELECT c.note.id, COUNT(c) FROM Comment c WHERE c.note.id IN :noteIds GROUP BY c.note.id")
+    List<Object[]> countCommentsByNoteIds(@Param("noteIds") List<Long> noteIds);
+
+    default Map<Long, Long> findCommentCountsByNoteIds(List<Long> noteIds) {
+        return countCommentsByNoteIds(noteIds).stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]));
+    }
+
     boolean existsByIdAndUserClerkId(Long commentId, String clerkId);
 }

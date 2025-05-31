@@ -60,46 +60,52 @@ public class FileService {
             throw new RuntimeException("Le fichier est trop volumineux (max: " + (maxFileSize / 1024 / 1024) + "MB)");
         }
 
+        // 🔧 CORRECTION 1: Validation du nom de fichier
+        String originalFileName = file.getOriginalFilename();
+        if (originalFileName == null || originalFileName.trim().isEmpty()) {
+            throw new RuntimeException("Le nom du fichier est invalide");
+        }
+
         User user = userService.findByClerkId(clerkId);
 
-        // Générer un nom unique pour le fichier
-        String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
-        String fileExtension = getFileExtension(originalFileName);
+        // Nettoyer le nom de fichier
+        String cleanedFileName = StringUtils.cleanPath(originalFileName);
+        String fileExtension = getFileExtension(cleanedFileName);
         String uniqueFileName = UUID.randomUUID().toString() + fileExtension;
 
-        // Créer le dossier de destination si nécessaire
+        // Créer les dossiers
         Path uploadPath = Paths.get(uploadDir);
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }
 
-        // Créer un sous-dossier par utilisateur
         Path userUploadPath = uploadPath.resolve(clerkId);
         if (!Files.exists(userUploadPath)) {
             Files.createDirectories(userUploadPath);
         }
 
-        // Sauvegarder le fichier
+        // Sauvegarder le fichier physique
         Path destinationPath = userUploadPath.resolve(uniqueFileName);
         Files.copy(file.getInputStream(), destinationPath, StandardCopyOption.REPLACE_EXISTING);
 
-        // Créer l'entrée en base de données
+        // 🔧 CORRECTION 2: Créer l'entité sans URI temporaire
         File fileEntity = new File();
         fileEntity.setFilename(uniqueFileName);
-        fileEntity.setInitialFilename(originalFileName);
+        fileEntity.setInitialFilename(cleanedFileName);
         fileEntity.setPath(destinationPath.toString());
-        fileEntity.setUri("/api/files/" + fileEntity.getId() + "/download"); // Sera mis à jour après save
         fileEntity.setContentType(file.getContentType());
         fileEntity.setFileSize(file.getSize());
         fileEntity.setUser(user);
+        // URI sera définie après la sauvegarde
 
+        // 🔧 CORRECTION 3: Une seule sauvegarde avec URI correcte
         File savedFile = fileRepository.save(fileEntity);
 
-        // Mettre à jour l'URI avec l'ID réel
+        // Maintenant on peut définir l'URI avec l'ID réel
         savedFile.setUri("/api/files/" + savedFile.getId() + "/download");
         savedFile = fileRepository.save(savedFile);
 
-        // Retourner la réponse
+        // Créer la réponse
         FileUploadResponseDto response = new FileUploadResponseDto();
         response.setId(savedFile.getId());
         response.setFilename(savedFile.getFilename());

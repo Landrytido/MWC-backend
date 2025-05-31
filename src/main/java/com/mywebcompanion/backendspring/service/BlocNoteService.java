@@ -20,7 +20,7 @@ public class BlocNoteService {
         System.out.println("🚨🚨🚨 getBlocNoteByClerkId appelée pour: " + clerkId);
         System.out.println("🚨🚨🚨 Stack trace:");
         Thread.dumpStack();
-        BlocNote blocNote = blocNoteRepository.findByUserClerkIdWithUser(clerkId)
+        BlocNote blocNote = blocNoteRepository.findByUserClerkId(clerkId)
                 .orElse(null);
 
         if (blocNote == null) {
@@ -33,7 +33,7 @@ public class BlocNoteService {
 
     public BlocNoteDto upsertBlocNote(String clerkId, String content) {
         // OPTIMISATION: Utiliser la requête optimisée
-        BlocNote blocNote = blocNoteRepository.findByUserClerkIdWithUser(clerkId)
+        BlocNote blocNote = blocNoteRepository.findByUserClerkId(clerkId)
                 .orElse(null);
 
         if (blocNote == null) {
