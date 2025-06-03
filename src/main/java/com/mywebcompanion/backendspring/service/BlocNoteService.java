@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -17,34 +19,32 @@ public class BlocNoteService {
     private final UserService userService;
 
     public BlocNoteDto getBlocNoteByClerkId(String clerkId) {
-        System.out.println("🚨🚨🚨 getBlocNoteByClerkId appelée pour: " + clerkId);
-        System.out.println("🚨🚨🚨 Stack trace:");
-        Thread.dumpStack();
-        BlocNote blocNote = blocNoteRepository.findByUserClerkId(clerkId)
-                .orElse(null);
+        System.out.println("🔍 getBlocNoteByClerkId - clerkId: " + clerkId);
 
-        if (blocNote == null) {
-            // Si aucun bloc-note n'existe, créer un bloc-note vide
+        // ✅ UNE SEULE requête optimisée
+        Optional<BlocNote> blocNoteOpt = blocNoteRepository.findByUserClerkId(clerkId);
+
+        if (blocNoteOpt.isEmpty()) {
             return createEmptyBlocNote(clerkId);
         }
 
-        return convertToDto(blocNote);
+        return convertToDto(blocNoteOpt.get());
     }
 
     public BlocNoteDto upsertBlocNote(String clerkId, String content) {
-        // OPTIMISATION: Utiliser la requête optimisée
-        BlocNote blocNote = blocNoteRepository.findByUserClerkId(clerkId)
-                .orElse(null);
+        // ✅ Vérifier d'abord l'existence
+        Optional<BlocNote> existingBlocNote = blocNoteRepository.findByUserClerkId(clerkId);
 
-        if (blocNote == null) {
-            // Créer un nouveau bloc-note
-            User user = userService.findByClerkId(clerkId);
-
-            blocNote = new BlocNote();
-            blocNote.setUser(user);
+        BlocNote blocNote;
+        if (existingBlocNote.isPresent()) {
+            // Mettre à jour le bloc-note existant
+            blocNote = existingBlocNote.get();
             blocNote.setContent(content);
         } else {
-            // Mettre à jour le bloc-note existant
+            // Créer un nouveau bloc-note
+            User user = userService.findByClerkIdMinimal(clerkId); // ✅ Méthode minimale
+            blocNote = new BlocNote();
+            blocNote.setUser(user);
             blocNote.setContent(content);
         }
 
@@ -53,21 +53,18 @@ public class BlocNoteService {
     }
 
     public void deleteBlocNote(String clerkId) {
-        // OPTIMISATION: Vérifier d'abord l'existence puis supprimer
         if (!blocNoteRepository.existsByUserClerkId(clerkId)) {
             throw new RuntimeException("Bloc-note non trouvé");
         }
-
         blocNoteRepository.deleteByUserClerkId(clerkId);
     }
 
-    // OPTIMISATION: Cache le user lors de la création
     private BlocNoteDto createEmptyBlocNote(String clerkId) {
-        User user = userService.findByClerkId(clerkId);
+        User user = userService.findByClerkIdMinimal(clerkId); // ✅ Méthode minimale
 
         BlocNote blocNote = new BlocNote();
         blocNote.setUser(user);
-        blocNote.setContent(""); // Contenu vide par défaut
+        blocNote.setContent("");
 
         BlocNote savedBlocNote = blocNoteRepository.save(blocNote);
         return convertToDto(savedBlocNote);

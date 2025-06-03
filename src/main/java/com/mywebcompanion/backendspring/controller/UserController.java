@@ -37,7 +37,7 @@ public class UserController {
     public ResponseEntity<?> getProfile(Authentication authentication) {
         try {
             String clerkId = clerkService.extractClerkId(authentication);
-            User user = userService.findByClerkId(clerkId);
+            User user = userService.findByClerkIdMinimal(clerkId);
 
             UserDto responseDto = new UserDto();
             responseDto.setClerkId(user.getClerkId());

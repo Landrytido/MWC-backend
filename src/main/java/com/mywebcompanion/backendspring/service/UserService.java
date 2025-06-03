@@ -24,10 +24,21 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public User findByClerkId(String clerkId) {
-        System.out.println("🚨🚨🚨 UserService.findByClerkId - clerkId: " + clerkId);
-        Thread.dumpStack();
+    // ✅ Méthode minimale qui ne charge que l'User sans relations
+    public User findByClerkIdMinimal(String clerkId) {
         return userRepository.findByClerkId(clerkId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    // ✅ Méthode avec relations spécifiques si nécessaire
+    public User findByClerkIdWithBlocNote(String clerkId) {
+        return userRepository.findByClerkIdWithBlocNote(clerkId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    // ✅ Méthode par défaut (garde la compatibilité)
+    public User findByClerkId(String clerkId) {
+        System.out.println("⚠️ findByClerkId appelée - vérifiez si findByClerkIdMinimal peut être utilisée");
+        return findByClerkIdMinimal(clerkId);
     }
 }
