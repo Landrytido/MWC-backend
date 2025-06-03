@@ -27,7 +27,7 @@ public class NotebookService {
     }
 
     public NotebookDto createNotebook(String clerkId, NotebookDto notebookDto) {
-        User user = userService.findByClerkId(clerkId);
+        User user = userService.findByClerkIdMinimal(clerkId);
 
         Notebook notebook = new Notebook();
         notebook.setTitle(notebookDto.getTitle());

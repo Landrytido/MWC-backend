@@ -13,7 +13,7 @@ public class UserService {
     private final UserRepository userRepository;
 
     public User syncUser(UserDto userDto) {
-        User user = userRepository.findByClerkId(userDto.getClerkId())
+        User user = userRepository.findByClerkIdMinimal(userDto.getClerkId())
                 .orElse(new User());
 
         user.setClerkId(userDto.getClerkId());
@@ -26,7 +26,7 @@ public class UserService {
 
     // ✅ Méthode minimale qui ne charge que l'User sans relations
     public User findByClerkIdMinimal(String clerkId) {
-        return userRepository.findByClerkId(clerkId)
+        return userRepository.findByClerkIdMinimal(clerkId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 

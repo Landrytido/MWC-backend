@@ -21,7 +21,6 @@ public class BlocNoteService {
     public BlocNoteDto getBlocNoteByClerkId(String clerkId) {
         System.out.println("🔍 getBlocNoteByClerkId - clerkId: " + clerkId);
 
-        // ✅ UNE SEULE requête optimisée
         Optional<BlocNote> blocNoteOpt = blocNoteRepository.findByUserClerkId(clerkId);
 
         if (blocNoteOpt.isEmpty()) {
@@ -32,16 +31,13 @@ public class BlocNoteService {
     }
 
     public BlocNoteDto upsertBlocNote(String clerkId, String content) {
-        // ✅ Vérifier d'abord l'existence
         Optional<BlocNote> existingBlocNote = blocNoteRepository.findByUserClerkId(clerkId);
 
         BlocNote blocNote;
         if (existingBlocNote.isPresent()) {
-            // Mettre à jour le bloc-note existant
             blocNote = existingBlocNote.get();
             blocNote.setContent(content);
         } else {
-            // Créer un nouveau bloc-note
             User user = userService.findByClerkIdMinimal(clerkId); // ✅ Méthode minimale
             blocNote = new BlocNote();
             blocNote.setUser(user);
@@ -60,7 +56,7 @@ public class BlocNoteService {
     }
 
     private BlocNoteDto createEmptyBlocNote(String clerkId) {
-        User user = userService.findByClerkIdMinimal(clerkId); // ✅ Méthode minimale
+        User user = userService.findByClerkIdMinimal(clerkId);
 
         BlocNote blocNote = new BlocNote();
         blocNote.setUser(user);

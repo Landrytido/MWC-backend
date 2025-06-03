@@ -25,7 +25,7 @@ public class SavedLinkService {
     }
 
     public SavedLinkDto createLink(String clerkId, SavedLinkDto linkDto) {
-        User user = userService.findByClerkId(clerkId);
+        User user = userService.findByClerkIdMinimal(clerkId);
 
         SavedLink link = new SavedLink();
         link.setUrl(linkDto.getUrl());

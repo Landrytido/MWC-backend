@@ -29,7 +29,7 @@ public class LinkGroupService {
     }
 
     public LinkGroupDto createLinkGroup(String clerkId, LinkGroupDto linkGroupDto) {
-        User user = userService.findByClerkId(clerkId);
+        User user = userService.findByClerkIdMinimal(clerkId);
 
         LinkGroup linkGroup = new LinkGroup();
         linkGroup.setTitle(linkGroupDto.getTitle());

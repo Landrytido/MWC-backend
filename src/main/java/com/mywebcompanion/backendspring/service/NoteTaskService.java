@@ -52,7 +52,7 @@ public class NoteTaskService {
     }
 
     public NoteTaskDto createNoteTask(String clerkId, Long noteId, String title, Long parentId) {
-        User user = userService.findByClerkId(clerkId);
+        User user = userService.findByClerkIdMinimal(clerkId);
 
         Note note = noteRepository.findById(noteId)
                 .orElseThrow(() -> new RuntimeException("Note non trouvée"));

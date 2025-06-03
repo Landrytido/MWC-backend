@@ -59,7 +59,7 @@ public class TaskService {
     }
 
     public TaskDto createTask(String clerkId, TaskDto taskDto) {
-        User user = userService.findByClerkId(clerkId);
+        User user = userService.findByClerkIdMinimal(clerkId);
 
         Task task = new Task();
         task.setTitle(taskDto.getTitle());

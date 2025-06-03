@@ -20,7 +20,7 @@ import java.util.List;
 @Data
 @ToString(exclude = { "notes", "links", "notebooks", "blocNote", "comments", "tasks",
         "dailyPlans", "dailyTasks", "dailyTaskHistory", "noteTasks",
-        "linkGroups", "files" }) // Éviter les boucles dans toString
+        "linkGroups", "files" })
 public class User {
 
     @Id
@@ -48,8 +48,10 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
+    @BatchSize(size = 10)
     private List<Notebook> notebooks = new ArrayList<>();
 
+    // ✅ OneToOne avec @LazyToOne(NO_PROXY)
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @LazyToOne(LazyToOneOption.NO_PROXY)
     @JsonIgnore
@@ -57,34 +59,42 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
+    @BatchSize(size = 10)
     private List<Comment> comments = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
+    @BatchSize(size = 10)
     private List<Task> tasks = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
+    @BatchSize(size = 10)
     private List<DailyPlan> dailyPlans = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
+    @BatchSize(size = 10)
     private List<DailyTask> dailyTasks = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
+    @BatchSize(size = 10)
     private List<DailyTaskHistory> dailyTaskHistory = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
+    @BatchSize(size = 10)
     private List<NoteTask> noteTasks = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
+    @BatchSize(size = 10)
     private List<LinkGroup> linkGroups = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
+    @BatchSize(size = 10)
     private List<File> files = new ArrayList<>();
 
     @CreationTimestamp
