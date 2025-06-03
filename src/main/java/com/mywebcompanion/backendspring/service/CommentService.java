@@ -41,7 +41,7 @@ public class CommentService {
     }
 
     public CommentDto createComment(String clerkId, Long noteId, String content) {
-        User user = userService.findByClerkIdMinimal(clerkId);
+        User user = userService.findByClerkId(clerkId);
 
         Note note = noteRepository.findById(noteId)
                 .orElseThrow(() -> new RuntimeException("Note non trouvée"));

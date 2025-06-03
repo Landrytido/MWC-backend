@@ -37,7 +37,8 @@ public class UserController {
     public ResponseEntity<?> getProfile(Authentication authentication) {
         try {
             String clerkId = clerkService.extractClerkId(authentication);
-            User user = userService.findByClerkIdMinimal(clerkId);
+            // ✅ Méthode simple et unique
+            User user = userService.findByClerkId(clerkId);
 
             UserDto responseDto = new UserDto();
             responseDto.setClerkId(user.getClerkId());

@@ -21,7 +21,7 @@ public class LabelService {
     private final UserService userService;
 
     public List<LabelDto> getAllLabelsByUserId(String clerkId) {
-        User user = userService.findByClerkIdMinimal(clerkId);
+        User user = userService.findByClerkId(clerkId);
         return labelRepository.findByUserIdOrderByNameAsc(user.getId().intValue())
                 .stream()
                 .map(this::convertToDto)
@@ -29,7 +29,7 @@ public class LabelService {
     }
 
     public LabelDto createLabel(String clerkId, String name) {
-        User user = userService.findByClerkIdMinimal(clerkId);
+        User user = userService.findByClerkId(clerkId);
 
         // Vérifier si le label existe déjà
         if (labelRepository.findByNameAndUserId(name, user.getId().intValue()).isPresent()) {
@@ -49,7 +49,7 @@ public class LabelService {
     }
 
     public LabelDto updateLabel(String clerkId, String labelId, String name) {
-        User user = userService.findByClerkIdMinimal(clerkId);
+        User user = userService.findByClerkId(clerkId);
 
         Label label = labelRepository.findById(labelId)
                 .orElseThrow(() -> new RuntimeException("Label non trouvé"));
@@ -73,7 +73,7 @@ public class LabelService {
     }
 
     public void deleteLabel(String clerkId, String labelId, boolean forceDelete) {
-        User user = userService.findByClerkIdMinimal(clerkId);
+        User user = userService.findByClerkId(clerkId);
 
         Label label = labelRepository.findById(labelId)
                 .orElseThrow(() -> new RuntimeException("Label non trouvé"));
@@ -94,7 +94,7 @@ public class LabelService {
     }
 
     public LabelDto getLabelById(String clerkId, String labelId) {
-        User user = userService.findByClerkIdMinimal(clerkId);
+        User user = userService.findByClerkId(clerkId);
 
         Label label = labelRepository.findById(labelId)
                 .orElseThrow(() -> new RuntimeException("Label non trouvé"));

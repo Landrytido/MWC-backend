@@ -66,7 +66,7 @@ public class FileService {
             throw new RuntimeException("Le nom du fichier est invalide");
         }
 
-        User user = userService.findByClerkIdMinimal(clerkId);
+        User user = userService.findByClerkId(clerkId);
 
         // Nettoyer le nom de fichier
         String cleanedFileName = StringUtils.cleanPath(originalFileName);

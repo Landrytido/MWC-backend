@@ -35,7 +35,7 @@ public class DailyTaskService {
     }
 
     public DailyTaskDto createDailyTask(String clerkId, CreateDailyTaskDto dto) {
-        User user = userService.findByClerkIdMinimal(clerkId);
+        User user = userService.findByClerkId(clerkId);
 
         LocalDate scheduledDate = dto.getScheduledDate() != null ? dto.getScheduledDate() : LocalDate.now();
 
@@ -185,7 +185,7 @@ public class DailyTaskService {
     }
 
     private DailyPlan createDailyPlan(String clerkId, LocalDate date) {
-        User user = userService.findByClerkIdMinimal(clerkId);
+        User user = userService.findByClerkId(clerkId);
 
         DailyPlan plan = new DailyPlan();
         plan.setUser(user);

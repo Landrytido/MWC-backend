@@ -49,7 +49,7 @@ public class NoteService {
 
     @Transactional // 🔧 Écriture nécessaire
     public NoteDto createNote(String clerkId, NoteDto noteDto) {
-        User user = userService.findByClerkIdMinimal(clerkId);
+        User user = userService.findByClerkId(clerkId);
 
         Note note = new Note();
         note.setTitle(noteDto.getTitle());
@@ -92,7 +92,7 @@ public class NoteService {
 
     @Transactional // 🔧 Écriture nécessaire
     public NoteDto createNoteInNotebook(String clerkId, NoteDto noteDto, Long notebookId) {
-        User user = userService.findByClerkIdMinimal(clerkId);
+        User user = userService.findByClerkId(clerkId);
 
         Note note = new Note();
         note.setTitle(noteDto.getTitle());
