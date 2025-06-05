@@ -24,9 +24,20 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public User findByClerkId(String clerkId) {
+    // ✅ MÉTHODE SIMPLE - évite le chargement des collections
+    public User findByClerkIdSimple(String clerkId) {
         return userRepository.findByClerkId(clerkId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
 
+    // ✅ MÉTHODE AVEC BLOC NOTE si nécessaire
+    public User findByClerkIdWithBlocNote(String clerkId) {
+        return userRepository.findByClerkIdWithBlocNote(clerkId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    // ✅ Alias pour compatibilité - utilisera la méthode simple
+    public User findByClerkId(String clerkId) {
+        return findByClerkIdSimple(clerkId);
+    }
 }

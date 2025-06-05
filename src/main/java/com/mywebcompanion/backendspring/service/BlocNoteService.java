@@ -21,7 +21,7 @@ public class BlocNoteService {
     public BlocNoteDto getBlocNoteByClerkId(String clerkId) {
         System.out.println("🔍 getBlocNoteByClerkId - clerkId: " + clerkId);
 
-        // ✅ UNE SEULE requête directe pour le BlocNote
+        // ✅ REQUÊTE DIRECTE - évite le chargement des collections User
         Optional<BlocNote> blocNoteOpt = blocNoteRepository.findByUserClerkId(clerkId);
 
         if (blocNoteOpt.isEmpty()) {
@@ -39,8 +39,8 @@ public class BlocNoteService {
             blocNote = existingBlocNote.get();
             blocNote.setContent(content);
         } else {
-            // ✅ Requête séparée pour l'User seulement si nécessaire
-            User user = userService.findByClerkId(clerkId);
+            // ✅ Utiliser la méthode simple pour récupérer juste l'User
+            User user = userService.findByClerkIdSimple(clerkId);
             blocNote = new BlocNote();
             blocNote.setUser(user);
             blocNote.setContent(content);
@@ -58,8 +58,8 @@ public class BlocNoteService {
     }
 
     private BlocNoteDto createEmptyBlocNote(String clerkId) {
-        // ✅ Requête séparée pour l'User seulement si nécessaire
-        User user = userService.findByClerkId(clerkId);
+        // ✅ Utiliser la méthode simple
+        User user = userService.findByClerkIdSimple(clerkId);
 
         BlocNote blocNote = new BlocNote();
         blocNote.setUser(user);

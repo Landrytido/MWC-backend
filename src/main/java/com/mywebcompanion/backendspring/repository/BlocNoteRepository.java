@@ -12,10 +12,11 @@ import java.util.Optional;
 @Repository
 public interface BlocNoteRepository extends JpaRepository<BlocNote, Long> {
 
-    @Query("SELECT bn FROM BlocNote bn WHERE bn.user.clerkId = :clerkId")
+    // ✅ REQUÊTE DIRECTE - évite de passer par User
+    @Query("SELECT bn FROM BlocNote bn JOIN bn.user u WHERE u.clerkId = :clerkId")
     Optional<BlocNote> findByUserClerkId(@Param("clerkId") String clerkId);
 
-    @Query("SELECT COUNT(bn) > 0 FROM BlocNote bn WHERE bn.user.clerkId = :clerkId")
+    @Query("SELECT COUNT(bn) > 0 FROM BlocNote bn JOIN bn.user u WHERE u.clerkId = :clerkId")
     boolean existsByUserClerkId(@Param("clerkId") String clerkId);
 
     @Modifying
