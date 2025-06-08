@@ -23,14 +23,14 @@ public class CommentService {
     private final NoteRepository noteRepository;
     private final UserService userService;
 
-    public List<CommentDto> getCommentsByNoteId(String clerkId, Long noteId) {
+    public List<CommentDto> getCommentsByNoteId(String email, Long noteId) {
         // Vérifier que l'utilisateur peut accéder à cette note
         Note note = noteRepository.findById(noteId)
                 .orElseThrow(() -> new RuntimeException("Note non trouvée"));
 
         // Pour l'instant, seul le propriétaire de la note peut voir ses commentaires
         // Plus tard, on peut ajouter la gestion des notes partagées
-        if (!note.getUser().getClerkId().equals(clerkId)) {
+        if (!note.getUser().getEmail().equals(email)) {
             throw new RuntimeException("Vous n'avez pas accès aux commentaires de cette note");
         }
 
@@ -40,15 +40,15 @@ public class CommentService {
                 .collect(Collectors.toList());
     }
 
-    public CommentDto createComment(String clerkId, Long noteId, String content) {
-        User user = userService.findByClerkId(clerkId);
+    public CommentDto createComment(String email, Long noteId, String content) {
+        User user = userService.findByEmail(email);
 
         Note note = noteRepository.findById(noteId)
                 .orElseThrow(() -> new RuntimeException("Note non trouvée"));
 
         // Vérifier que l'utilisateur peut commenter cette note
         // Pour l'instant, seul le propriétaire peut commenter ses propres notes
-        if (!note.getUser().getClerkId().equals(clerkId)) {
+        if (!note.getUser().getEmail().equals(email)) {
             throw new RuntimeException("Vous ne pouvez pas commenter cette note");
         }
 
@@ -61,12 +61,12 @@ public class CommentService {
         return convertToDto(savedComment);
     }
 
-    public CommentDto updateComment(String clerkId, Long commentId, String content) {
+    public CommentDto updateComment(String email, Long commentId, String content) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Commentaire non trouvé"));
 
         // Vérifier que l'utilisateur est l'auteur du commentaire
-        if (!comment.getUser().getClerkId().equals(clerkId)) {
+        if (!comment.getUser().getEmail().equals(email)) {
             throw new RuntimeException("Vous ne pouvez modifier que vos propres commentaires");
         }
 
@@ -75,14 +75,14 @@ public class CommentService {
         return convertToDto(updatedComment);
     }
 
-    public void deleteComment(String clerkId, Long commentId) {
+    public void deleteComment(String email, Long commentId) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new RuntimeException("Commentaire non trouvé"));
 
         // Vérifier que l'utilisateur est l'auteur du commentaire OU le propriétaire de
         // la note
-        boolean isAuthor = comment.getUser().getClerkId().equals(clerkId);
-        boolean isNoteOwner = comment.getNote().getUser().getClerkId().equals(clerkId);
+        boolean isAuthor = comment.getUser().getEmail().equals(email);
+        boolean isNoteOwner = comment.getNote().getUser().getEmail().equals(email);
 
         if (!isAuthor && !isNoteOwner) {
             throw new RuntimeException(
@@ -92,8 +92,9 @@ public class CommentService {
         commentRepository.delete(comment);
     }
 
-    public List<CommentDto> getMyComments(String clerkId) {
-        return commentRepository.findByUserClerkIdOrderByCreatedAtDesc(clerkId)
+    public List<CommentDto> getMyComments(String email) {
+        User user = userService.findByEmail(email);
+        return commentRepository.findByUserIdOrderByCreatedAtDesc(user.getId())
                 .stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
@@ -106,9 +107,9 @@ public class CommentService {
         dto.setNoteId(comment.getNote().getId());
         dto.setCreatedAt(comment.getCreatedAt());
 
-        // Convertir l'auteur en UserDto
+        // Convertir l'auteur en UserDto (sans clerkId)
         UserDto authorDto = new UserDto();
-        authorDto.setClerkId(comment.getUser().getClerkId());
+        authorDto.setId(comment.getUser().getId());
         authorDto.setEmail(comment.getUser().getEmail());
         authorDto.setFirstName(comment.getUser().getFirstName());
         authorDto.setLastName(comment.getUser().getLastName());

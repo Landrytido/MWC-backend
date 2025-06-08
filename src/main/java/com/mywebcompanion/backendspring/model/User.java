@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.ToString;
-
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -18,7 +17,7 @@ import java.util.List;
 @Data
 @ToString(exclude = { "notes", "links", "notebooks", "blocNote", "comments", "tasks",
         "dailyPlans", "dailyTasks", "dailyTaskHistory", "noteTasks",
-        "linkGroups", "files" })
+        "linkGroups", "files", "password" })
 public class User {
 
     @Id
@@ -26,15 +25,24 @@ public class User {
     private Long id;
 
     @Column(unique = true, nullable = false)
-    private String clerkId;
+    private String email;
 
     @Column(nullable = false)
-    private String email;
+    @JsonIgnore
+    private String password;
 
     private String firstName;
     private String lastName;
 
-    // ✅ TOUTES LES COLLECTIONS EN LAZY + NO_PROXY
+    @Column(nullable = false)
+    private Boolean enabled = true;
+
+    @Column(nullable = false)
+    private Boolean emailVerified = false;
+
+    private String emailVerificationToken;
+    private LocalDateTime emailVerificationExpiry;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
     @BatchSize(size = 10)
@@ -50,7 +58,6 @@ public class User {
     @BatchSize(size = 10)
     private List<Notebook> notebooks = new ArrayList<>();
 
-    // ✅ BlocNote avec LAZY + NO_PROXY
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
     private BlocNote blocNote;

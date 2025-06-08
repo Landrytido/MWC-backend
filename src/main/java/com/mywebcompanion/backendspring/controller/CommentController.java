@@ -4,11 +4,11 @@ import com.mywebcompanion.backendspring.dto.CommentDto;
 import com.mywebcompanion.backendspring.service.CommentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/comments")
@@ -17,65 +17,48 @@ public class CommentController {
 
     private final CommentService commentService;
 
-    // Obtenir tous les commentaires d'une note
-    @GetMapping("/notes/{noteId}")
-    public ResponseEntity<List<CommentDto>> getCommentsByNote(
-            Authentication authentication,
+    @GetMapping("/note/{noteId}")
+    public ResponseEntity<List<CommentDto>> getCommentsByNoteId(
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long noteId) {
-        String clerkId = authentication.getName();
-        List<CommentDto> comments = commentService.getCommentsByNoteId(clerkId, noteId);
+        String email = userDetails.getUsername();
+        List<CommentDto> comments = commentService.getCommentsByNoteId(email, noteId);
         return ResponseEntity.ok(comments);
     }
 
-    // Créer un commentaire sur une note
-    @PostMapping("/notes/{noteId}")
+    @PostMapping("/note/{noteId}")
     public ResponseEntity<CommentDto> createComment(
-            Authentication authentication,
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long noteId,
-            @RequestBody Map<String, String> request) {
-        String clerkId = authentication.getName();
-        String content = request.get("content");
-
-        if (content == null || content.trim().isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        CommentDto createdComment = commentService.createComment(clerkId, noteId, content.trim());
-        return ResponseEntity.ok(createdComment);
+            @RequestBody CommentDto request) {
+        String email = userDetails.getUsername();
+        CommentDto comment = commentService.createComment(email, noteId, request.getContent());
+        return ResponseEntity.ok(comment);
     }
 
-    // Modifier un commentaire
-    @PutMapping("/{id}")
+    @PutMapping("/{commentId}")
     public ResponseEntity<CommentDto> updateComment(
-            Authentication authentication,
-            @PathVariable Long id,
-            @RequestBody Map<String, String> request) {
-        String clerkId = authentication.getName();
-        String content = request.get("content");
-
-        if (content == null || content.trim().isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        CommentDto updatedComment = commentService.updateComment(clerkId, id, content.trim());
-        return ResponseEntity.ok(updatedComment);
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long commentId,
+            @RequestBody CommentDto request) {
+        String email = userDetails.getUsername();
+        CommentDto comment = commentService.updateComment(email, commentId, request.getContent());
+        return ResponseEntity.ok(comment);
     }
 
-    // Supprimer un commentaire
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{commentId}")
     public ResponseEntity<Void> deleteComment(
-            Authentication authentication,
-            @PathVariable Long id) {
-        String clerkId = authentication.getName();
-        commentService.deleteComment(clerkId, id);
-        return ResponseEntity.noContent().build();
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long commentId) {
+        String email = userDetails.getUsername();
+        commentService.deleteComment(email, commentId);
+        return ResponseEntity.ok().build();
     }
 
-    // Obtenir tous mes commentaires
-    @GetMapping("/my-comments")
-    public ResponseEntity<List<CommentDto>> getMyComments(Authentication authentication) {
-        String clerkId = authentication.getName();
-        List<CommentDto> comments = commentService.getMyComments(clerkId);
+    @GetMapping("/my")
+    public ResponseEntity<List<CommentDto>> getMyComments(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        List<CommentDto> comments = commentService.getMyComments(email);
         return ResponseEntity.ok(comments);
     }
 }

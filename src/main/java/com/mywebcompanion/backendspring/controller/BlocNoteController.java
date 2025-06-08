@@ -1,49 +1,41 @@
 package com.mywebcompanion.backendspring.controller;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import com.mywebcompanion.backendspring.dto.BlocNoteDto;
 import com.mywebcompanion.backendspring.service.BlocNoteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
 @RestController
-@RequestMapping("/api/bloc-note")
+@RequestMapping("/api/bloc-notes")
 @RequiredArgsConstructor
 public class BlocNoteController {
 
     private final BlocNoteService blocNoteService;
 
     @GetMapping
-    public ResponseEntity<BlocNoteDto> getBlocNote(Authentication authentication) {
-        String clerkId = authentication.getName();
-        System.out.println("🔍 Controller getBlocNote appelé pour: " + clerkId);
-        BlocNoteDto blocNote = blocNoteService.getBlocNoteByClerkId(clerkId);
+    public ResponseEntity<BlocNoteDto> getBlocNote(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        BlocNoteDto blocNote = blocNoteService.getBlocNoteByUserEmail(email);
         return ResponseEntity.ok(blocNote);
     }
 
-    @PutMapping
-    public ResponseEntity<BlocNoteDto> updateBlocNote(
-            Authentication authentication,
-            @RequestBody Map<String, String> request) {
-        String clerkId = authentication.getName();
-        String content = request.get("content");
-
-        // Autoriser le contenu vide ou null
-        if (content == null) {
-            content = "";
-        }
-
-        BlocNoteDto updatedBlocNote = blocNoteService.upsertBlocNote(clerkId, content);
-        return ResponseEntity.ok(updatedBlocNote);
+    @PostMapping
+    public ResponseEntity<BlocNoteDto> upsertBlocNote(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody BlocNoteDto request) {
+        String email = userDetails.getUsername();
+        BlocNoteDto blocNote = blocNoteService.upsertBlocNote(email, request.getContent());
+        return ResponseEntity.ok(blocNote);
     }
 
     @DeleteMapping
-    public ResponseEntity<Void> deleteBlocNote(Authentication authentication) {
-        String clerkId = authentication.getName();
-        blocNoteService.deleteBlocNote(clerkId);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<Void> deleteBlocNote(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        blocNoteService.deleteBlocNote(email);
+        return ResponseEntity.ok().build();
     }
 }

@@ -2,9 +2,6 @@ package com.mywebcompanion.backendspring.repository;
 
 import com.mywebcompanion.backendspring.model.BlocNote;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -12,14 +9,11 @@ import java.util.Optional;
 @Repository
 public interface BlocNoteRepository extends JpaRepository<BlocNote, Long> {
 
-    // ✅ REQUÊTE DIRECTE - évite de passer par User
-    @Query("SELECT bn FROM BlocNote bn JOIN bn.user u WHERE u.clerkId = :clerkId")
-    Optional<BlocNote> findByUserClerkId(@Param("clerkId") String clerkId);
+    // Remplacer les méthodes Clerk par des méthodes basées sur User ID
+    Optional<BlocNote> findByUserId(Long userId);
 
-    @Query("SELECT COUNT(bn) > 0 FROM BlocNote bn JOIN bn.user u WHERE u.clerkId = :clerkId")
-    boolean existsByUserClerkId(@Param("clerkId") String clerkId);
+    boolean existsByUserId(Long userId);
 
-    @Modifying
-    @Query("DELETE FROM BlocNote bn WHERE bn.user.clerkId = :clerkId")
-    void deleteByUserClerkId(@Param("clerkId") String clerkId);
+    void deleteByUserId(Long userId);
+
 }

@@ -18,29 +18,32 @@ public class BlocNoteService {
     private final BlocNoteRepository blocNoteRepository;
     private final UserService userService;
 
-    public BlocNoteDto getBlocNoteByClerkId(String clerkId) {
-        System.out.println("🔍 getBlocNoteByClerkId - clerkId: " + clerkId);
+    // Remplacer clerkId par email de l'utilisateur authentifié
+    public BlocNoteDto getBlocNoteByUserEmail(String email) {
+        System.out.println("🔍 getBlocNoteByUserEmail - email: " + email);
 
-        // ✅ REQUÊTE DIRECTE - évite le chargement des collections User
-        Optional<BlocNote> blocNoteOpt = blocNoteRepository.findByUserClerkId(clerkId);
+        // Récupérer l'utilisateur par email
+        User user = userService.findByEmail(email);
+
+        // Chercher le bloc-note de cet utilisateur
+        Optional<BlocNote> blocNoteOpt = blocNoteRepository.findByUserId(user.getId());
 
         if (blocNoteOpt.isEmpty()) {
-            return createEmptyBlocNote(clerkId);
+            return createEmptyBlocNote(user);
         }
 
         return convertToDto(blocNoteOpt.get());
     }
 
-    public BlocNoteDto upsertBlocNote(String clerkId, String content) {
-        Optional<BlocNote> existingBlocNote = blocNoteRepository.findByUserClerkId(clerkId);
+    public BlocNoteDto upsertBlocNote(String email, String content) {
+        User user = userService.findByEmail(email);
+        Optional<BlocNote> existingBlocNote = blocNoteRepository.findByUserId(user.getId());
 
         BlocNote blocNote;
         if (existingBlocNote.isPresent()) {
             blocNote = existingBlocNote.get();
             blocNote.setContent(content);
         } else {
-            // ✅ Utiliser la méthode simple pour récupérer juste l'User
-            User user = userService.findByClerkIdSimple(clerkId);
             blocNote = new BlocNote();
             blocNote.setUser(user);
             blocNote.setContent(content);
@@ -50,17 +53,17 @@ public class BlocNoteService {
         return convertToDto(savedBlocNote);
     }
 
-    public void deleteBlocNote(String clerkId) {
-        if (!blocNoteRepository.existsByUserClerkId(clerkId)) {
+    public void deleteBlocNote(String email) {
+        User user = userService.findByEmail(email);
+
+        if (!blocNoteRepository.existsByUserId(user.getId())) {
             throw new RuntimeException("Bloc-note non trouvé");
         }
-        blocNoteRepository.deleteByUserClerkId(clerkId);
+
+        blocNoteRepository.deleteByUserId(user.getId());
     }
 
-    private BlocNoteDto createEmptyBlocNote(String clerkId) {
-        // ✅ Utiliser la méthode simple
-        User user = userService.findByClerkIdSimple(clerkId);
-
+    private BlocNoteDto createEmptyBlocNote(User user) {
         BlocNote blocNote = new BlocNote();
         blocNote.setUser(user);
         blocNote.setContent("");

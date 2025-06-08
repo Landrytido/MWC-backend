@@ -23,25 +23,26 @@ public class DailyTaskService {
     private final DailyTaskHistoryRepository dailyTaskHistoryRepository;
     private final UserService userService;
 
-    public List<DailyTaskDto> getDailyTasks(String clerkId, LocalDate date) {
+    public List<DailyTaskDto> getDailyTasks(String email, LocalDate date) {
         if (date == null) {
             date = LocalDate.now();
         }
 
-        return dailyTaskRepository.findByUserClerkIdAndScheduledDateOrderByOrderIndexAsc(clerkId, date)
+        User user = userService.findByEmail(email);
+        return dailyTaskRepository.findByUserIdAndScheduledDateOrderByOrderIndexAsc(user.getId(), date)
                 .stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
-    public DailyTaskDto createDailyTask(String clerkId, CreateDailyTaskDto dto) {
-        User user = userService.findByClerkId(clerkId);
+    public DailyTaskDto createDailyTask(String email, CreateDailyTaskDto dto) {
+        User user = userService.findByEmail(email);
 
         LocalDate scheduledDate = dto.getScheduledDate() != null ? dto.getScheduledDate() : LocalDate.now();
 
         // Limite de 6 tâches pour le futur (demain et après)
         if (scheduledDate.isAfter(LocalDate.now())) {
-            Long count = dailyTaskRepository.countByUserClerkIdAndScheduledDate(clerkId, scheduledDate);
+            Long count = dailyTaskRepository.countByUserIdAndScheduledDate(user.getId(), scheduledDate);
             if (count >= 6) {
                 throw new RuntimeException("Vous ne pouvez pas planifier plus de 6 tâches pour " + scheduledDate);
             }
@@ -56,15 +57,16 @@ public class DailyTaskService {
 
         // Définir l'ordre (à la fin)
         List<DailyTask> existingTasks = dailyTaskRepository
-                .findByUserClerkIdAndScheduledDateOrderByOrderIndexAsc(clerkId, scheduledDate);
+                .findByUserIdAndScheduledDateOrderByOrderIndexAsc(user.getId(), scheduledDate);
         task.setOrderIndex(existingTasks.size());
 
         DailyTask savedTask = dailyTaskRepository.save(task);
         return convertToDto(savedTask);
     }
 
-    public DailyTaskDto updateDailyTask(String clerkId, Long taskId, DailyTaskDto dto) {
-        DailyTask task = dailyTaskRepository.findByIdAndUserClerkId(taskId, clerkId)
+    public DailyTaskDto updateDailyTask(String email, Long taskId, DailyTaskDto dto) {
+        User user = userService.findByEmail(email);
+        DailyTask task = dailyTaskRepository.findByIdAndUserId(taskId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Tâche non trouvée"));
 
         task.setTitle(dto.getTitle());
@@ -84,20 +86,22 @@ public class DailyTaskService {
         return convertToDto(updatedTask);
     }
 
-    public void deleteDailyTask(String clerkId, Long taskId) {
-        DailyTask task = dailyTaskRepository.findByIdAndUserClerkId(taskId, clerkId)
+    public void deleteDailyTask(String email, Long taskId) {
+        User user = userService.findByEmail(email);
+        DailyTask task = dailyTaskRepository.findByIdAndUserId(taskId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Tâche non trouvée"));
 
         dailyTaskRepository.delete(task);
     }
 
-    public List<DailyTaskDto> reorderDailyTasks(String clerkId, ReorderDailyTasksDto dto) {
+    public List<DailyTaskDto> reorderDailyTasks(String email, ReorderDailyTasksDto dto) {
+        User user = userService.findByEmail(email);
         List<Long> orderedIds = dto.getOrderedIds();
         AtomicInteger index = new AtomicInteger(0);
 
         // Mettre à jour l'ordre pour chaque tâche
         orderedIds.forEach(id -> {
-            DailyTask task = dailyTaskRepository.findByIdAndUserClerkId(id, clerkId)
+            DailyTask task = dailyTaskRepository.findByIdAndUserId(id, user.getId())
                     .orElseThrow(() -> new RuntimeException("Tâche non trouvée: " + id));
             task.setOrderIndex(index.getAndIncrement());
             dailyTaskRepository.save(task);
@@ -105,15 +109,16 @@ public class DailyTaskService {
 
         // Retourner les tâches réorganisées
         LocalDate date = LocalDate.now(); // On assume que c'est pour aujourd'hui
-        return getDailyTasks(clerkId, date);
+        return getDailyTasks(email, date);
     }
 
-    public boolean confirmEndOfDay(String clerkId) {
+    public boolean confirmEndOfDay(String email) {
+        User user = userService.findByEmail(email);
         LocalDate today = LocalDate.now();
         LocalDate tomorrow = today.plusDays(1);
 
         // Archiver toutes les tâches du jour
-        List<DailyTask> todayTasks = dailyTaskRepository.findByUserClerkIdAndScheduledDateOrderByOrderIndexAsc(clerkId,
+        List<DailyTask> todayTasks = dailyTaskRepository.findByUserIdAndScheduledDateOrderByOrderIndexAsc(user.getId(),
                 today);
 
         for (DailyTask task : todayTasks) {
@@ -134,23 +139,25 @@ public class DailyTaskService {
         }
 
         // Marquer le plan du jour comme confirmé
-        DailyPlan plan = dailyPlanRepository.findByUserClerkIdAndDate(clerkId, today)
-                .orElse(createDailyPlan(clerkId, today));
+        DailyPlan plan = dailyPlanRepository.findByUserIdAndDate(user.getId(), today)
+                .orElse(createDailyPlan(user, today));
         plan.setConfirmed(true);
         dailyPlanRepository.save(plan);
 
         return true;
     }
 
-    public DailyPlanDto getDailyPlan(String clerkId, LocalDate date) {
-        DailyPlan plan = dailyPlanRepository.findByUserClerkIdAndDate(clerkId, date)
+    public DailyPlanDto getDailyPlan(String email, LocalDate date) {
+        User user = userService.findByEmail(email);
+        DailyPlan plan = dailyPlanRepository.findByUserIdAndDate(user.getId(), date)
                 .orElse(null);
 
         return plan != null ? convertPlanToDto(plan) : null;
     }
 
-    public MonthlyReportDto getMonthlyReport(String clerkId, int year, int month) {
-        Object[] result = dailyTaskHistoryRepository.getMonthlyReport(clerkId, year, month);
+    public MonthlyReportDto getMonthlyReport(String email, int year, int month) {
+        User user = userService.findByEmail(email);
+        Object[] result = dailyTaskHistoryRepository.getMonthlyReportByUserId(user.getId(), year, month);
 
         if (result.length > 0 && result[0] != null) {
             Long total = ((Number) result[0]).longValue();
@@ -177,16 +184,15 @@ public class DailyTaskService {
         return emptyReport;
     }
 
-    public List<DailyTaskDto> getDailyHistory(String clerkId, LocalDate date) {
-        return dailyTaskHistoryRepository.findByUserClerkIdAndScheduledDateOrderByOrderIndexAsc(clerkId, date)
+    public List<DailyTaskDto> getDailyHistory(String email, LocalDate date) {
+        User user = userService.findByEmail(email);
+        return dailyTaskHistoryRepository.findByUserIdAndScheduledDateOrderByOrderIndexAsc(user.getId(), date)
                 .stream()
                 .map(this::convertHistoryToDto)
                 .collect(Collectors.toList());
     }
 
-    private DailyPlan createDailyPlan(String clerkId, LocalDate date) {
-        User user = userService.findByClerkId(clerkId);
-
+    private DailyPlan createDailyPlan(User user, LocalDate date) {
         DailyPlan plan = new DailyPlan();
         plan.setUser(user);
         plan.setDate(date);
