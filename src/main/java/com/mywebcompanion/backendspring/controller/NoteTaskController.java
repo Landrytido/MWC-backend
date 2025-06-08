@@ -5,6 +5,8 @@ import com.mywebcompanion.backendspring.service.NoteTaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,114 +19,74 @@ public class NoteTaskController {
 
     private final NoteTaskService noteTaskService;
 
-    // Obtenir toutes les tâches d'une note
-    @GetMapping("/notes/{noteId}")
-    public ResponseEntity<List<NoteTaskDto>> getNoteTasksByNote(
-            Authentication authentication,
+    @GetMapping("/note/{noteId}")
+    public ResponseEntity<List<NoteTaskDto>> getNoteTasksByNoteId(
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long noteId) {
-        String clerkId = authentication.getName();
-        List<NoteTaskDto> noteTasks = noteTaskService.getNoteTasksByNoteId(clerkId, noteId);
-        return ResponseEntity.ok(noteTasks);
+        String email = userDetails.getUsername();
+        List<NoteTaskDto> tasks = noteTaskService.getNoteTasksByNoteId(email, noteId);
+        return ResponseEntity.ok(tasks);
     }
 
-    // Obtenir toutes mes tâches de notes
-    @GetMapping("/my-tasks")
-    public ResponseEntity<List<NoteTaskDto>> getAllMyNoteTasks(Authentication authentication) {
-        String clerkId = authentication.getName();
-        List<NoteTaskDto> noteTasks = noteTaskService.getAllNoteTasksByUserId(clerkId);
-        return ResponseEntity.ok(noteTasks);
+    @GetMapping
+    public ResponseEntity<List<NoteTaskDto>> getAllNoteTasks(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        List<NoteTaskDto> tasks = noteTaskService.getAllNoteTasksByUserId(email);
+        return ResponseEntity.ok(tasks);
     }
 
-    // Obtenir mes tâches de notes en attente
-    @GetMapping("/my-tasks/pending")
-    public ResponseEntity<List<NoteTaskDto>> getPendingNoteTasks(Authentication authentication) {
-        String clerkId = authentication.getName();
-        List<NoteTaskDto> noteTasks = noteTaskService.getPendingNoteTasksByUserId(clerkId);
-        return ResponseEntity.ok(noteTasks);
+    @GetMapping("/pending")
+    public ResponseEntity<List<NoteTaskDto>> getPendingNoteTasks(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        List<NoteTaskDto> tasks = noteTaskService.getPendingNoteTasksByUserId(email);
+        return ResponseEntity.ok(tasks);
     }
 
-    // Obtenir une tâche de note par ID
-    @GetMapping("/{id}")
-    public ResponseEntity<NoteTaskDto> getNoteTaskById(
-            Authentication authentication,
-            @PathVariable Long id) {
-        String clerkId = authentication.getName();
-        NoteTaskDto noteTask = noteTaskService.getNoteTaskById(clerkId, id);
-        return ResponseEntity.ok(noteTask);
-    }
-
-    // Créer une nouvelle tâche de note
-    @PostMapping("/notes/{noteId}")
+    @PostMapping("/note/{noteId}")
     public ResponseEntity<NoteTaskDto> createNoteTask(
-            Authentication authentication,
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long noteId,
-            @RequestBody Map<String, Object> request) {
-        String clerkId = authentication.getName();
-        String title = (String) request.get("title");
-        Long parentId = request.get("parentId") != null ? Long.valueOf(request.get("parentId").toString()) : null;
-
-        if (title == null || title.trim().isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        NoteTaskDto createdTask = noteTaskService.createNoteTask(clerkId, noteId, title.trim(), parentId);
-        return ResponseEntity.ok(createdTask);
+            @RequestParam String title,
+            @RequestParam(required = false) Long parentId) {
+        String email = userDetails.getUsername();
+        NoteTaskDto task = noteTaskService.createNoteTask(email, noteId, title, parentId);
+        return ResponseEntity.ok(task);
     }
 
-    // Créer une sous-tâche
-    @PostMapping("/{parentId}/subtasks")
-    public ResponseEntity<NoteTaskDto> createSubtask(
-            Authentication authentication,
-            @PathVariable Long parentId,
-            @RequestBody Map<String, String> request) {
-        String clerkId = authentication.getName();
-        String title = request.get("title");
-
-        if (title == null || title.trim().isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        // Récupérer la tâche parent pour obtenir l'ID de la note
-        NoteTaskDto parentTask = noteTaskService.getNoteTaskById(clerkId, parentId);
-
-        NoteTaskDto createdSubtask = noteTaskService.createNoteTask(clerkId, parentTask.getNoteId(), title.trim(),
-                parentId);
-        return ResponseEntity.ok(createdSubtask);
-    }
-
-    // Mettre à jour une tâche de note
-    @PutMapping("/{id}")
+    @PutMapping("/{taskId}")
     public ResponseEntity<NoteTaskDto> updateNoteTask(
-            Authentication authentication,
-            @PathVariable Long id,
-            @RequestBody NoteTaskDto dto) {
-        String clerkId = authentication.getName();
-
-        if (dto.getTitle() == null || dto.getTitle().trim().isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        NoteTaskDto updatedTask = noteTaskService.updateNoteTask(clerkId, id, dto);
-        return ResponseEntity.ok(updatedTask);
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long taskId,
+            @RequestBody NoteTaskDto request) {
+        String email = userDetails.getUsername();
+        NoteTaskDto task = noteTaskService.updateNoteTask(email, taskId, request);
+        return ResponseEntity.ok(task);
     }
 
-    // Basculer l'état de completion d'une tâche de note
-    @PutMapping("/{id}/toggle")
+    @PatchMapping("/{taskId}/toggle")
     public ResponseEntity<NoteTaskDto> toggleNoteTaskCompletion(
-            Authentication authentication,
-            @PathVariable Long id) {
-        String clerkId = authentication.getName();
-        NoteTaskDto updatedTask = noteTaskService.toggleNoteTaskCompletion(clerkId, id);
-        return ResponseEntity.ok(updatedTask);
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long taskId) {
+        String email = userDetails.getUsername();
+        NoteTaskDto task = noteTaskService.toggleNoteTaskCompletion(email, taskId);
+        return ResponseEntity.ok(task);
     }
 
-    // Supprimer une tâche de note
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{taskId}")
     public ResponseEntity<Void> deleteNoteTask(
-            Authentication authentication,
-            @PathVariable Long id) {
-        String clerkId = authentication.getName();
-        noteTaskService.deleteNoteTask(clerkId, id);
-        return ResponseEntity.noContent().build();
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long taskId) {
+        String email = userDetails.getUsername();
+        noteTaskService.deleteNoteTask(email, taskId);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{taskId}")
+    public ResponseEntity<NoteTaskDto> getNoteTaskById(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long taskId) {
+        String email = userDetails.getUsername();
+        NoteTaskDto task = noteTaskService.getNoteTaskById(email, taskId);
+        return ResponseEntity.ok(task);
     }
 }

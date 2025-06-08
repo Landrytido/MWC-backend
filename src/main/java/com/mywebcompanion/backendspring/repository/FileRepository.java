@@ -4,33 +4,26 @@ import com.mywebcompanion.backendspring.model.File;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface FileRepository extends JpaRepository<File, Long> {
 
-    // Trouver tous les fichiers d'un utilisateur
-    List<File> findByUserClerkIdOrderByCreatedAtDesc(String clerkId);
+    List<File> findByUserIdOrderByCreatedAtDesc(Long userId);
 
-    // Trouver un fichier par ID et utilisateur (sécurité)
-    Optional<File> findByIdAndUserClerkId(Long id, String clerkId);
+    List<File> findByUserIdAndContentTypeStartingWithOrderByCreatedAtDesc(Long userId, String contentTypePrefix);
 
-    // Trouver par nom de fichier et utilisateur
-    Optional<File> findByFilenameAndUserClerkId(String filename, String clerkId);
+    Optional<File> findByIdAndUserId(Long id, Long userId);
 
-    // Trouver par type de contenu
-    List<File> findByUserClerkIdAndContentTypeStartingWithOrderByCreatedAtDesc(String clerkId,
-            String contentTypePrefix);
+    @Query("SELECT SUM(f.fileSize) FROM File f WHERE f.user.id = :userId")
+    Long getTotalFileSizeByUserId(@Param("userId") Long userId);
 
-    // Statistiques - taille totale des fichiers d'un utilisateur
-    @Query("SELECT COALESCE(SUM(f.fileSize), 0) FROM File f WHERE f.user.clerkId = :clerkId")
-    Long getTotalFileSizeByUserClerkId(@Param("clerkId") String clerkId);
+    @Query("SELECT f.contentType, COUNT(f) FROM File f WHERE f.user.id = :userId GROUP BY f.contentType")
+    List<Object[]> countFilesByTypeAndUserId(@Param("userId") Long userId);
 
-    // Compter les fichiers par type
-    @Query("SELECT f.contentType, COUNT(f) FROM File f WHERE f.user.clerkId = :clerkId GROUP BY f.contentType")
-    List<Object[]> countFilesByTypeAndUserClerkId(@Param("clerkId") String clerkId);
+    Long countByUserId(Long userId);
 
-    // Supprimer un fichier par ID et utilisateur (sécurité)
-    void deleteByIdAndUserClerkId(Long id, String clerkId);
 }

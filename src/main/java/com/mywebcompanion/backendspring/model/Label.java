@@ -17,7 +17,7 @@ import java.util.Set;
 public class Label {
 
     @Id
-    private String id; // UUID comme dans Prisma
+    private String id;
 
     @Column(nullable = false)
     private String name;

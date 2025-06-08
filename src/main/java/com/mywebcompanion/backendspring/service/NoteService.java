@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true) // 🔧 Par défaut en lecture seule
+@Transactional(readOnly = true)
 public class NoteService {
 
     private final NoteRepository noteRepository;
@@ -27,15 +27,15 @@ public class NoteService {
     private final CommentRepository commentRepository;
     private final NoteTaskRepository noteTaskRepository;
 
-    public List<NoteDto> getNotesByClerkId(String clerkId) {
-        // 🔧 OPTIMISATION: Une seule requête pour les notes
-        List<Note> notes = noteRepository.findByUserClerkIdOrderByCreatedAtDesc(clerkId);
+    public List<NoteDto> getNotesByUserEmail(String email) {
+        User user = userService.findByEmail(email);
+        List<Note> notes = noteRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
 
         if (notes.isEmpty()) {
             return List.of();
         }
 
-        // 🔧 OPTIMISATION: Récupérer tous les comptes en une seule requête
+        // Optimisation: Récupérer tous les comptes en une seule requête
         List<Long> noteIds = notes.stream().map(Note::getId).collect(Collectors.toList());
 
         Map<Long, Long> commentCounts = commentRepository.findCommentCountsByNoteIds(noteIds);
@@ -47,9 +47,9 @@ public class NoteService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional // 🔧 Écriture nécessaire
-    public NoteDto createNote(String clerkId, NoteDto noteDto) {
-        User user = userService.findByClerkId(clerkId);
+    @Transactional
+    public NoteDto createNote(String email, NoteDto noteDto) {
+        User user = userService.findByEmail(email);
 
         Note note = new Note();
         note.setTitle(noteDto.getTitle());
@@ -60,15 +60,11 @@ public class NoteService {
         return convertToDto(savedNote);
     }
 
-    @Transactional // 🔧 Écriture nécessaire
-    public NoteDto updateNote(String clerkId, Long noteId, NoteDto noteDto) {
-        Note note = noteRepository.findById(noteId)
-                .orElseThrow(() -> new RuntimeException("Note not found"));
-
-        // Vérifier que la note appartient à l'utilisateur
-        if (!note.getUser().getClerkId().equals(clerkId)) {
-            throw new RuntimeException("Not authorized to update this note");
-        }
+    @Transactional
+    public NoteDto updateNote(String email, Long noteId, NoteDto noteDto) {
+        User user = userService.findByEmail(email);
+        Note note = noteRepository.findByIdAndUserId(noteId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Note non trouvée ou accès non autorisé"));
 
         note.setTitle(noteDto.getTitle());
         note.setContent(noteDto.getContent());
@@ -77,22 +73,18 @@ public class NoteService {
         return convertToDto(updatedNote);
     }
 
-    @Transactional // 🔧 Écriture nécessaire
-    public void deleteNote(String clerkId, Long noteId) {
-        Note note = noteRepository.findById(noteId)
-                .orElseThrow(() -> new RuntimeException("Note not found"));
-
-        // Vérifier que la note appartient à l'utilisateur
-        if (!note.getUser().getClerkId().equals(clerkId)) {
-            throw new RuntimeException("Not authorized to delete this note");
-        }
+    @Transactional
+    public void deleteNote(String email, Long noteId) {
+        User user = userService.findByEmail(email);
+        Note note = noteRepository.findByIdAndUserId(noteId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Note non trouvée ou accès non autorisé"));
 
         noteRepository.delete(note);
     }
 
-    @Transactional // 🔧 Écriture nécessaire
-    public NoteDto createNoteInNotebook(String clerkId, NoteDto noteDto, Long notebookId) {
-        User user = userService.findByClerkId(clerkId);
+    @Transactional
+    public NoteDto createNoteInNotebook(String email, NoteDto noteDto, Long notebookId) {
+        User user = userService.findByEmail(email);
 
         Note note = new Note();
         note.setTitle(noteDto.getTitle());
@@ -101,7 +93,7 @@ public class NoteService {
 
         // Assigner au carnet si spécifié
         if (notebookId != null) {
-            Notebook notebook = notebookRepository.findByIdAndUserClerkId(notebookId, clerkId)
+            Notebook notebook = notebookRepository.findByIdAndUserId(notebookId, user.getId())
                     .orElseThrow(() -> new RuntimeException("Carnet non trouvé"));
             note.setNotebook(notebook);
         }
@@ -110,20 +102,17 @@ public class NoteService {
         return convertToDto(savedNote);
     }
 
-    @Transactional // 🔧 Écriture nécessaire
-    public NoteDto moveNoteToNotebook(String clerkId, Long noteId, Long notebookId) {
-        Note note = noteRepository.findById(noteId)
-                .orElseThrow(() -> new RuntimeException("Note not found"));
-
-        if (!note.getUser().getClerkId().equals(clerkId)) {
-            throw new RuntimeException("Not authorized to update this note");
-        }
+    @Transactional
+    public NoteDto moveNoteToNotebook(String email, Long noteId, Long notebookId) {
+        User user = userService.findByEmail(email);
+        Note note = noteRepository.findByIdAndUserId(noteId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Note non trouvée ou accès non autorisé"));
 
         // Si notebookId est null, on retire la note du carnet
         if (notebookId == null) {
             note.setNotebook(null);
         } else {
-            Notebook notebook = notebookRepository.findByIdAndUserClerkId(notebookId, clerkId)
+            Notebook notebook = notebookRepository.findByIdAndUserId(notebookId, user.getId())
                     .orElseThrow(() -> new RuntimeException("Carnet non trouvé"));
             note.setNotebook(notebook);
         }
@@ -132,18 +121,20 @@ public class NoteService {
         return convertToDto(updatedNote);
     }
 
-    public List<NoteDto> getNotesByNotebookId(String clerkId, Long notebookId) {
+    public List<NoteDto> getNotesByNotebookId(String email, Long notebookId) {
+        User user = userService.findByEmail(email);
+
         // Vérifier que le carnet appartient à l'utilisateur
-        notebookRepository.findByIdAndUserClerkId(notebookId, clerkId)
+        notebookRepository.findByIdAndUserId(notebookId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Carnet non trouvé"));
 
-        List<Note> notes = noteRepository.findByNotebookIdOrderByCreatedAtDesc(notebookId);
+        List<Note> notes = noteRepository.findByUserIdAndNotebookId(user.getId(), notebookId);
 
         if (notes.isEmpty()) {
             return List.of();
         }
 
-        // 🔧 OPTIMISATION: Récupérer tous les comptes en une seule requête
+        // Optimisation: Récupérer tous les comptes en une seule requête
         List<Long> noteIds = notes.stream().map(Note::getId).collect(Collectors.toList());
 
         Map<Long, Long> commentCounts = commentRepository.findCommentCountsByNoteIds(noteIds);
@@ -155,7 +146,24 @@ public class NoteService {
                 .collect(Collectors.toList());
     }
 
-    // 🔧 OPTIMISATION: Méthode de conversion avec compteurs pré-calculés
+    public NoteDto getNoteById(String email, Long noteId) {
+        User user = userService.findByEmail(email);
+        Note note = noteRepository.findByIdAndUserId(noteId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Note non trouvée ou accès non autorisé"));
+
+        return convertToDto(note);
+    }
+
+    public List<NoteDto> searchNotes(String email, String keyword) {
+        User user = userService.findByEmail(email);
+        List<Note> notes = noteRepository.findByUserIdAndTitleContainingIgnoreCase(user.getId(), keyword);
+
+        return notes.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    // Optimisation: Méthode de conversion avec compteurs pré-calculés
     private NoteDto convertToDto(Note note, Map<Long, Long> commentCounts,
             Map<Long, Long> taskCounts, Map<Long, Long> completedTaskCounts) {
         NoteDto dto = new NoteDto();
@@ -163,6 +171,7 @@ public class NoteService {
         dto.setTitle(note.getTitle());
         dto.setContent(note.getContent());
         dto.setCreatedAt(note.getCreatedAt());
+        dto.setUpdatedAt(note.getUpdatedAt());
 
         if (note.getNotebook() != null) {
             dto.setNotebookId(note.getNotebook().getId());
@@ -177,7 +186,7 @@ public class NoteService {
         return dto;
     }
 
-    // 🔧 Méthode de conversion simple pour les cas où les compteurs ne sont pas
+    // Méthode de conversion simple pour les cas où les compteurs ne sont pas
     // nécessaires
     private NoteDto convertToDto(Note note) {
         NoteDto dto = new NoteDto();
@@ -185,6 +194,7 @@ public class NoteService {
         dto.setTitle(note.getTitle());
         dto.setContent(note.getContent());
         dto.setCreatedAt(note.getCreatedAt());
+        dto.setUpdatedAt(note.getUpdatedAt());
 
         if (note.getNotebook() != null) {
             dto.setNotebookId(note.getNotebook().getId());

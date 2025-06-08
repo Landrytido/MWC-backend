@@ -5,10 +5,12 @@ import com.mywebcompanion.backendspring.model.SavedLinkGroupId;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface SavedLinkGroupRepository extends JpaRepository<SavedLinkGroup, SavedLinkGroupId> {
 
     // Trouver tous les liens d'un groupe
@@ -29,14 +31,29 @@ public interface SavedLinkGroupRepository extends JpaRepository<SavedLinkGroup, 
     // Supprimer toutes les relations d'un lien
     void deleteBySavedLinkId(Long savedLinkId);
 
-    // Trouver les liens les plus cliqués dans un groupe
-    @Query("SELECT slg FROM SavedLinkGroup slg WHERE slg.linkGroupId = :groupId ORDER BY slg.clickCounter DESC")
-    List<SavedLinkGroup> findTopClickedByGroupId(@Param("groupId") String groupId);
-
-    // Trouver les liens les plus cliqués globalement pour un utilisateur
+    // Nouvelles méthodes basées sur userId (Spring Security + JWT)
     @Query("SELECT slg FROM SavedLinkGroup slg " +
             "JOIN slg.linkGroup lg " +
-            "WHERE lg.user.clerkId = :clerkId " +
+            "WHERE lg.user.id = :userId " +
             "ORDER BY slg.clickCounter DESC")
-    List<SavedLinkGroup> findTopClickedByUserClerkId(@Param("clerkId") String clerkId);
+    List<SavedLinkGroup> findTopClickedByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT slg FROM SavedLinkGroup slg " +
+            "WHERE slg.linkGroupId = :linkGroupId " +
+            "ORDER BY slg.clickCounter DESC " +
+            "LIMIT 10")
+    List<SavedLinkGroup> findTopClickedByGroupId(@Param("linkGroupId") String linkGroupId);
+
+    // Trouver les liens d'un utilisateur dans tous ses groupes
+    @Query("SELECT slg FROM SavedLinkGroup slg " +
+            "JOIN slg.linkGroup lg " +
+            "WHERE lg.user.id = :userId " +
+            "ORDER BY slg.linkName ASC")
+    List<SavedLinkGroup> findAllByUserId(@Param("userId") Long userId);
+
+    // Compter les liens dans les groupes d'un utilisateur
+    @Query("SELECT COUNT(slg) FROM SavedLinkGroup slg " +
+            "JOIN slg.linkGroup lg " +
+            "WHERE lg.user.id = :userId")
+    Long countByUserId(@Param("userId") Long userId);
 }

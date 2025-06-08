@@ -20,19 +20,19 @@ public class LabelService {
     private final LabelRepository labelRepository;
     private final UserService userService;
 
-    public List<LabelDto> getAllLabelsByUserId(String clerkId) {
-        User user = userService.findByClerkId(clerkId);
-        return labelRepository.findByUserIdOrderByNameAsc(user.getId().intValue())
+    public List<LabelDto> getAllLabelsByUserEmail(String email) {
+        User user = userService.findByEmail(email);
+        return labelRepository.findByUserIdOrderByNameAsc(user.getId())
                 .stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
-    public LabelDto createLabel(String clerkId, String name) {
-        User user = userService.findByClerkId(clerkId);
+    public LabelDto createLabel(String email, String name) {
+        User user = userService.findByEmail(email);
 
         // Vérifier si le label existe déjà
-        if (labelRepository.findByNameAndUserId(name, user.getId().intValue()).isPresent()) {
+        if (labelRepository.findByNameAndUserId(name, user.getId()).isPresent()) {
             throw new RuntimeException("Un label avec ce nom existe déjà");
         }
 
@@ -48,19 +48,14 @@ public class LabelService {
         }
     }
 
-    public LabelDto updateLabel(String clerkId, String labelId, String name) {
-        User user = userService.findByClerkId(clerkId);
+    public LabelDto updateLabel(String email, String labelId, String name) {
+        User user = userService.findByEmail(email);
 
-        Label label = labelRepository.findById(labelId)
-                .orElseThrow(() -> new RuntimeException("Label non trouvé"));
-
-        // Vérifier que le label appartient à l'utilisateur
-        if (!label.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Vous n'avez pas le droit de modifier ce label");
-        }
+        Label label = labelRepository.findByIdAndUserId(labelId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Label non trouvé ou accès non autorisé"));
 
         // Vérifier si un autre label avec ce nom existe
-        labelRepository.findByNameAndUserId(name, user.getId().intValue())
+        labelRepository.findByNameAndUserId(name, user.getId())
                 .ifPresent(existingLabel -> {
                     if (!existingLabel.getId().equals(labelId)) {
                         throw new RuntimeException("Un label avec ce nom existe déjà");
@@ -72,39 +67,37 @@ public class LabelService {
         return convertToDto(updatedLabel);
     }
 
-    public void deleteLabel(String clerkId, String labelId, boolean forceDelete) {
-        User user = userService.findByClerkId(clerkId);
+    public void deleteLabel(String email, String labelId, boolean forceDelete) {
+        User user = userService.findByEmail(email);
 
-        Label label = labelRepository.findById(labelId)
-                .orElseThrow(() -> new RuntimeException("Label non trouvé"));
-
-        // Vérifier que le label appartient à l'utilisateur
-        if (!label.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Vous n'avez pas le droit de supprimer ce label");
-        }
+        Label label = labelRepository.findByIdAndUserId(labelId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Label non trouvé ou accès non autorisé"));
 
         // Vérifier s'il y a des notes associées
-        Long noteCount = labelRepository.countNotesByLabelId(labelId);
+        Long noteCount = labelRepository.countNotesByLabelIdAndUserId(labelId, user.getId());
         if (noteCount > 0 && !forceDelete) {
             throw new RuntimeException(
                     "Ce label est utilisé par " + noteCount + " note(s). Utilisez forceDelete=true pour le supprimer.");
         }
 
-        labelRepository.deleteById(labelId);
+        labelRepository.delete(label);
     }
 
-    public LabelDto getLabelById(String clerkId, String labelId) {
-        User user = userService.findByClerkId(clerkId);
+    public LabelDto getLabelById(String email, String labelId) {
+        User user = userService.findByEmail(email);
 
-        Label label = labelRepository.findById(labelId)
-                .orElseThrow(() -> new RuntimeException("Label non trouvé"));
-
-        // Vérifier que le label appartient à l'utilisateur
-        if (!label.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Vous n'avez pas le droit d'accéder à ce label");
-        }
+        Label label = labelRepository.findByIdAndUserId(labelId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Label non trouvé ou accès non autorisé"));
 
         return convertToDto(label);
+    }
+
+    public List<LabelDto> searchLabels(String email, String keyword) {
+        User user = userService.findByEmail(email);
+        return labelRepository.findByUserIdAndNameContainingIgnoreCase(user.getId(), keyword)
+                .stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
     }
 
     private LabelDto convertToDto(Label label) {
@@ -114,8 +107,8 @@ public class LabelService {
         dto.setCreatedAt(label.getCreatedAt());
         dto.setUpdatedAt(label.getUpdatedAt());
 
-        // Compter les notes associées
-        dto.setNoteCount(labelRepository.countNotesByLabelId(label.getId()));
+        // CORRECTION: labelId est maintenant un String (UUID)
+        dto.setNoteCount(labelRepository.countNotesByLabelIdAndUserId(label.getId(), label.getUser().getId()));
 
         return dto;
     }

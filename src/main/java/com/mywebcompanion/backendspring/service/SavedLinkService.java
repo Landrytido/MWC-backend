@@ -6,26 +6,29 @@ import com.mywebcompanion.backendspring.model.User;
 import com.mywebcompanion.backendspring.repository.SavedLinkRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class SavedLinkService {
 
     private final SavedLinkRepository savedLinkRepository;
     private final UserService userService;
 
-    public List<SavedLinkDto> getLinksByClerkId(String clerkId) {
-        return savedLinkRepository.findByUserClerkIdOrderByCreatedAtDesc(clerkId)
+    public List<SavedLinkDto> getLinksByUserEmail(String email) {
+        User user = userService.findByEmail(email);
+        return savedLinkRepository.findByUserIdOrderByCreatedAtDesc(user.getId())
                 .stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
-    public SavedLinkDto createLink(String clerkId, SavedLinkDto linkDto) {
-        User user = userService.findByClerkId(clerkId);
+    public SavedLinkDto createLink(String email, SavedLinkDto linkDto) {
+        User user = userService.findByEmail(email);
 
         SavedLink link = new SavedLink();
         link.setUrl(linkDto.getUrl());
@@ -37,14 +40,10 @@ public class SavedLinkService {
         return convertToDto(savedLink);
     }
 
-    public SavedLinkDto updateLink(String clerkId, Long linkId, SavedLinkDto linkDto) {
-        SavedLink link = savedLinkRepository.findById(linkId)
-                .orElseThrow(() -> new RuntimeException("Link not found"));
-
-        // Vérifier que le lien appartient à l'utilisateur
-        if (!link.getUser().getClerkId().equals(clerkId)) {
-            throw new RuntimeException("Not authorized to update this link");
-        }
+    public SavedLinkDto updateLink(String email, Long linkId, SavedLinkDto linkDto) {
+        User user = userService.findByEmail(email);
+        SavedLink link = savedLinkRepository.findByIdAndUserId(linkId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Lien non trouvé"));
 
         link.setUrl(linkDto.getUrl());
         link.setTitle(linkDto.getTitle());
@@ -54,16 +53,25 @@ public class SavedLinkService {
         return convertToDto(updatedLink);
     }
 
-    public void deleteLink(String clerkId, Long linkId) {
-        SavedLink link = savedLinkRepository.findById(linkId)
-                .orElseThrow(() -> new RuntimeException("Link not found"));
-
-        // Vérifier que le lien appartient à l'utilisateur
-        if (!link.getUser().getClerkId().equals(clerkId)) {
-            throw new RuntimeException("Not authorized to delete this link");
-        }
+    public void deleteLink(String email, Long linkId) {
+        User user = userService.findByEmail(email);
+        SavedLink link = savedLinkRepository.findByIdAndUserId(linkId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Lien non trouvé"));
 
         savedLinkRepository.delete(link);
+    }
+
+    public SavedLinkDto getLinkById(String email, Long linkId) {
+        User user = userService.findByEmail(email);
+        SavedLink link = savedLinkRepository.findByIdAndUserId(linkId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Lien non trouvé"));
+
+        return convertToDto(link);
+    }
+
+    public Long getLinkCount(String email) {
+        User user = userService.findByEmail(email);
+        return savedLinkRepository.countByUserId(user.getId());
     }
 
     private SavedLinkDto convertToDto(SavedLink link) {
@@ -73,6 +81,7 @@ public class SavedLinkService {
         dto.setTitle(link.getTitle());
         dto.setDescription(link.getDescription());
         dto.setCreatedAt(link.getCreatedAt());
+        dto.setUpdatedAt(link.getUpdatedAt());
         return dto;
     }
 }

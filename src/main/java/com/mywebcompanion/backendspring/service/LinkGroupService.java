@@ -21,15 +21,16 @@ public class LinkGroupService {
     private final UserService userService;
     private final SavedLinkGroupService savedLinkGroupService;
 
-    public List<LinkGroupDto> getAllLinkGroupsByClerkId(String clerkId) {
-        return linkGroupRepository.findByUserClerkIdOrderByTitleAsc(clerkId)
+    public List<LinkGroupDto> getAllLinkGroupsByUserEmail(String email) {
+        User user = userService.findByEmail(email);
+        return linkGroupRepository.findByUserIdOrderByTitleAsc(user.getId())
                 .stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
-    public LinkGroupDto createLinkGroup(String clerkId, LinkGroupDto linkGroupDto) {
-        User user = userService.findByClerkId(clerkId);
+    public LinkGroupDto createLinkGroup(String email, LinkGroupDto linkGroupDto) {
+        User user = userService.findByEmail(email);
 
         LinkGroup linkGroup = new LinkGroup();
         linkGroup.setTitle(linkGroupDto.getTitle());
@@ -40,9 +41,10 @@ public class LinkGroupService {
         return convertToDto(savedLinkGroup);
     }
 
-    public LinkGroupDto updateLinkGroup(String clerkId, String linkGroupId, LinkGroupDto linkGroupDto) {
-        LinkGroup linkGroup = linkGroupRepository.findByIdAndUserClerkId(linkGroupId, clerkId)
-                .orElseThrow(() -> new RuntimeException("Groupe de liens non trouvé"));
+    public LinkGroupDto updateLinkGroup(String email, Long linkGroupId, LinkGroupDto linkGroupDto) {
+        User user = userService.findByEmail(email);
+        LinkGroup linkGroup = linkGroupRepository.findByIdAndUserId(linkGroupId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Groupe de liens non trouvé ou accès non autorisé"));
 
         linkGroup.setTitle(linkGroupDto.getTitle());
         linkGroup.setDescription(linkGroupDto.getDescription());
@@ -51,19 +53,21 @@ public class LinkGroupService {
         return convertToDto(updatedLinkGroup);
     }
 
-    public void deleteLinkGroup(String clerkId, String linkGroupId) {
-        LinkGroup linkGroup = linkGroupRepository.findByIdAndUserClerkId(linkGroupId, clerkId)
-                .orElseThrow(() -> new RuntimeException("Groupe de liens non trouvé"));
+    public void deleteLinkGroup(String email, Long linkGroupId) {
+        User user = userService.findByEmail(email);
+        LinkGroup linkGroup = linkGroupRepository.findByIdAndUserId(linkGroupId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Groupe de liens non trouvé ou accès non autorisé"));
 
         // Les relations SavedLinkGroup sont supprimées automatiquement (cascade)
         linkGroupRepository.delete(linkGroup);
     }
 
-    public LinkGroupDto getLinkGroupById(String clerkId, String linkGroupId) {
-        LinkGroup linkGroup = linkGroupRepository.findByIdAndUserClerkId(linkGroupId, clerkId)
-                .orElseThrow(() -> new RuntimeException("Groupe de liens non trouvé"));
+    public LinkGroupDto getLinkGroupById(String email, Long linkGroupId) {
+        User user = userService.findByEmail(email);
+        LinkGroup linkGroup = linkGroupRepository.findByIdAndUserId(linkGroupId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Groupe de liens non trouvé ou accès non autorisé"));
 
-        return convertToDtoWithLinks(linkGroup);
+        return convertToDtoWithLinks(linkGroup, email);
     }
 
     private LinkGroupDto convertToDto(LinkGroup linkGroup) {
@@ -74,17 +78,17 @@ public class LinkGroupService {
         dto.setCreatedAt(linkGroup.getCreatedAt());
         dto.setUpdatedAt(linkGroup.getUpdatedAt());
 
-        // Compter les liens dans ce groupe
+        // CORRECTION: Le paramètre doit être de type Long, pas String
         dto.setLinkCount(linkGroupRepository.countLinksByGroupId(linkGroup.getId()).intValue());
 
         return dto;
     }
 
-    private LinkGroupDto convertToDtoWithLinks(LinkGroup linkGroup) {
+    private LinkGroupDto convertToDtoWithLinks(LinkGroup linkGroup, String email) {
         LinkGroupDto dto = convertToDto(linkGroup);
 
-        // Ajouter les liens du groupe
-        List<SavedLinkGroupDto> links = savedLinkGroupService.getLinksByGroupId(linkGroup.getId());
+        // CORRECTION: Appeler la méthode avec email et linkGroupId comme String
+        List<SavedLinkGroupDto> links = savedLinkGroupService.getLinksByGroupId(email, linkGroupId.toString());
         dto.setSavedLinks(links);
 
         return dto;

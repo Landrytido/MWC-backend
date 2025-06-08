@@ -22,14 +22,12 @@ public class NoteTaskService {
     private final NoteRepository noteRepository;
     private final UserService userService;
 
-    public List<NoteTaskDto> getNoteTasksByNoteId(String clerkId, Long noteId) {
-        // Vérifier que la note appartient à l'utilisateur
-        Note note = noteRepository.findById(noteId)
-                .orElseThrow(() -> new RuntimeException("Note non trouvée"));
+    public List<NoteTaskDto> getNoteTasksByNoteId(String email, Long noteId) {
+        User user = userService.findByEmail(email);
 
-        if (!note.getUser().getClerkId().equals(clerkId)) {
-            throw new RuntimeException("Vous n'avez pas accès aux tâches de cette note");
-        }
+        // Vérifier que la note appartient à l'utilisateur
+        Note note = noteRepository.findByIdAndUserId(noteId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Note non trouvée"));
 
         return noteTaskRepository.findByNoteIdAndParentIsNullOrderByCreatedAtAsc(noteId)
                 .stream()
@@ -37,30 +35,27 @@ public class NoteTaskService {
                 .collect(Collectors.toList());
     }
 
-    public List<NoteTaskDto> getAllNoteTasksByUserId(String clerkId) {
-        return noteTaskRepository.findByUserClerkIdOrderByCreatedAtDesc(clerkId)
+    public List<NoteTaskDto> getAllNoteTasksByUserId(String email) {
+        User user = userService.findByEmail(email);
+        return noteTaskRepository.findByUserIdOrderByCreatedAtDesc(user.getId())
                 .stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
-    public List<NoteTaskDto> getPendingNoteTasksByUserId(String clerkId) {
-        return noteTaskRepository.findByUserClerkIdAndCompletedFalseOrderByCreatedAtDesc(clerkId)
+    public List<NoteTaskDto> getPendingNoteTasksByUserId(String email) {
+        User user = userService.findByEmail(email);
+        return noteTaskRepository.findByUserIdAndCompletedFalseOrderByCreatedAtDesc(user.getId())
                 .stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
-    public NoteTaskDto createNoteTask(String clerkId, Long noteId, String title, Long parentId) {
-        User user = userService.findByClerkId(clerkId);
+    public NoteTaskDto createNoteTask(String email, Long noteId, String title, Long parentId) {
+        User user = userService.findByEmail(email);
 
-        Note note = noteRepository.findById(noteId)
+        Note note = noteRepository.findByIdAndUserId(noteId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Note non trouvée"));
-
-        // Vérifier que la note appartient à l'utilisateur
-        if (!note.getUser().getClerkId().equals(clerkId)) {
-            throw new RuntimeException("Vous ne pouvez pas ajouter de tâches à cette note");
-        }
 
         NoteTask noteTask = new NoteTask();
         noteTask.setTitle(title);
@@ -69,7 +64,7 @@ public class NoteTaskService {
 
         // Si c'est une sous-tâche
         if (parentId != null) {
-            NoteTask parent = noteTaskRepository.findByIdAndUserClerkId(parentId, clerkId)
+            NoteTask parent = noteTaskRepository.findByIdAndUserId(parentId, user.getId())
                     .orElseThrow(() -> new RuntimeException("Tâche parent non trouvée"));
             noteTask.setParent(parent);
         }
@@ -78,8 +73,9 @@ public class NoteTaskService {
         return convertToDto(savedTask);
     }
 
-    public NoteTaskDto updateNoteTask(String clerkId, Long taskId, NoteTaskDto dto) {
-        NoteTask noteTask = noteTaskRepository.findByIdAndUserClerkId(taskId, clerkId)
+    public NoteTaskDto updateNoteTask(String email, Long taskId, NoteTaskDto dto) {
+        User user = userService.findByEmail(email);
+        NoteTask noteTask = noteTaskRepository.findByIdAndUserId(taskId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Tâche non trouvée"));
 
         noteTask.setTitle(dto.getTitle());
@@ -115,8 +111,9 @@ public class NoteTaskService {
         return convertToDto(updatedTask);
     }
 
-    public NoteTaskDto toggleNoteTaskCompletion(String clerkId, Long taskId) {
-        NoteTask noteTask = noteTaskRepository.findByIdAndUserClerkId(taskId, clerkId)
+    public NoteTaskDto toggleNoteTaskCompletion(String email, Long taskId) {
+        User user = userService.findByEmail(email);
+        NoteTask noteTask = noteTaskRepository.findByIdAndUserId(taskId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Tâche non trouvée"));
 
         boolean newCompletionStatus = !noteTask.getCompleted();
@@ -143,16 +140,18 @@ public class NoteTaskService {
         return convertToDto(updatedTask);
     }
 
-    public void deleteNoteTask(String clerkId, Long taskId) {
-        NoteTask noteTask = noteTaskRepository.findByIdAndUserClerkId(taskId, clerkId)
+    public void deleteNoteTask(String email, Long taskId) {
+        User user = userService.findByEmail(email);
+        NoteTask noteTask = noteTaskRepository.findByIdAndUserId(taskId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Tâche non trouvée"));
 
         // La suppression en cascade des sous-tâches est gérée par JPA
         noteTaskRepository.delete(noteTask);
     }
 
-    public NoteTaskDto getNoteTaskById(String clerkId, Long taskId) {
-        NoteTask noteTask = noteTaskRepository.findByIdAndUserClerkId(taskId, clerkId)
+    public NoteTaskDto getNoteTaskById(String email, Long taskId) {
+        User user = userService.findByEmail(email);
+        NoteTask noteTask = noteTaskRepository.findByIdAndUserId(taskId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Tâche non trouvée"));
 
         return convertToDto(noteTask);

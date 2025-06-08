@@ -5,6 +5,7 @@ import com.mywebcompanion.backendspring.dto.SavedLinkGroupDto;
 import com.mywebcompanion.backendspring.model.SavedLink;
 import com.mywebcompanion.backendspring.model.SavedLinkGroup;
 import com.mywebcompanion.backendspring.model.SavedLinkGroupId;
+import com.mywebcompanion.backendspring.model.User;
 import com.mywebcompanion.backendspring.repository.LinkGroupRepository;
 import com.mywebcompanion.backendspring.repository.SavedLinkGroupRepository;
 import com.mywebcompanion.backendspring.repository.SavedLinkRepository;
@@ -23,21 +24,30 @@ public class SavedLinkGroupService {
         private final SavedLinkGroupRepository savedLinkGroupRepository;
         private final LinkGroupRepository linkGroupRepository;
         private final SavedLinkRepository savedLinkRepository;
+        private final UserService userService;
 
-        public List<SavedLinkGroupDto> getLinksByGroupId(String linkGroupId) {
+        public List<SavedLinkGroupDto> getLinksByGroupId(String email, String linkGroupId) {
+                User user = userService.findByEmail(email);
+
+                // Vérifier que le groupe appartient à l'utilisateur
+                linkGroupRepository.findByIdAndUserId(linkGroupId, user.getId())
+                                .orElseThrow(() -> new RuntimeException("Groupe de liens non trouvé"));
+
                 return savedLinkGroupRepository.findByLinkGroupIdOrderByLinkNameAsc(linkGroupId)
                                 .stream()
                                 .map(this::convertToDto)
                                 .collect(Collectors.toList());
         }
 
-        public SavedLinkGroupDto addLinkToGroup(String clerkId, String linkGroupId, Long savedLinkId, String linkName) {
+        public SavedLinkGroupDto addLinkToGroup(String email, String linkGroupId, Long savedLinkId, String linkName) {
+                User user = userService.findByEmail(email);
+
                 // Vérifier que le groupe appartient à l'utilisateur
-                linkGroupRepository.findByIdAndUserClerkId(linkGroupId, clerkId)
+                linkGroupRepository.findByIdAndUserId(linkGroupId, user.getId())
                                 .orElseThrow(() -> new RuntimeException("Groupe de liens non trouvé"));
 
                 // Vérifier que le lien appartient à l'utilisateur
-                SavedLink savedLink = savedLinkRepository.findByIdAndUserClerkId(savedLinkId, clerkId)
+                SavedLink savedLink = savedLinkRepository.findByIdAndUserId(savedLinkId, user.getId())
                                 .orElseThrow(() -> new RuntimeException("Lien sauvegardé non trouvé"));
 
                 // Vérifier si le lien n'est pas déjà dans le groupe
@@ -52,7 +62,7 @@ public class SavedLinkGroupService {
                 savedLinkGroup.setLinkName(linkName != null ? linkName : savedLink.getTitle());
                 savedLinkGroup.setClickCounter(0);
 
-                // 🔧 CORRECTION : SAUVEGARDER AVANT DE RÉCUPÉRER
+                // Sauvegarder avant de récupérer
                 savedLinkGroupRepository.save(savedLinkGroup);
 
                 // Recharger avec les relations pour s'assurer d'avoir toutes les données
@@ -60,10 +70,12 @@ public class SavedLinkGroupService {
                                 .orElseThrow(() -> new RuntimeException("Erreur lors de la création")));
         }
 
-        public SavedLinkGroupDto updateLinkInGroup(String clerkId, String linkGroupId, Long savedLinkId,
+        public SavedLinkGroupDto updateLinkInGroup(String email, String linkGroupId, Long savedLinkId,
                         String newLinkName) {
+                User user = userService.findByEmail(email);
+
                 // Vérifier que le groupe appartient à l'utilisateur
-                linkGroupRepository.findByIdAndUserClerkId(linkGroupId, clerkId)
+                linkGroupRepository.findByIdAndUserId(linkGroupId, user.getId())
                                 .orElseThrow(() -> new RuntimeException("Groupe de liens non trouvé"));
 
                 // Trouver la relation
@@ -78,9 +90,11 @@ public class SavedLinkGroupService {
                 return convertToDto(updated);
         }
 
-        public SavedLinkGroupDto incrementClickCounter(String clerkId, String linkGroupId, Long savedLinkId) {
+        public SavedLinkGroupDto incrementClickCounter(String email, String linkGroupId, Long savedLinkId) {
+                User user = userService.findByEmail(email);
+
                 // Vérifier que le groupe appartient à l'utilisateur
-                linkGroupRepository.findByIdAndUserClerkId(linkGroupId, clerkId)
+                linkGroupRepository.findByIdAndUserId(linkGroupId, user.getId())
                                 .orElseThrow(() -> new RuntimeException("Groupe de liens non trouvé"));
 
                 // Trouver la relation
@@ -95,9 +109,11 @@ public class SavedLinkGroupService {
                 return convertToDto(updated);
         }
 
-        public void removeLinkFromGroup(String clerkId, String linkGroupId, Long savedLinkId) {
+        public void removeLinkFromGroup(String email, String linkGroupId, Long savedLinkId) {
+                User user = userService.findByEmail(email);
+
                 // Vérifier que le groupe appartient à l'utilisateur
-                linkGroupRepository.findByIdAndUserClerkId(linkGroupId, clerkId)
+                linkGroupRepository.findByIdAndUserId(linkGroupId, user.getId())
                                 .orElseThrow(() -> new RuntimeException("Groupe de liens non trouvé"));
 
                 // Supprimer la relation
@@ -105,9 +121,11 @@ public class SavedLinkGroupService {
                 savedLinkGroupRepository.deleteById(id);
         }
 
-        public List<SavedLinkGroupDto> getTopClickedLinks(String clerkId, String linkGroupId) {
+        public List<SavedLinkGroupDto> getTopClickedLinks(String email, String linkGroupId) {
+                User user = userService.findByEmail(email);
+
                 // Vérifier que le groupe appartient à l'utilisateur
-                linkGroupRepository.findByIdAndUserClerkId(linkGroupId, clerkId)
+                linkGroupRepository.findByIdAndUserId(linkGroupId, user.getId())
                                 .orElseThrow(() -> new RuntimeException("Groupe de liens non trouvé"));
 
                 return savedLinkGroupRepository.findTopClickedByGroupId(linkGroupId)
@@ -116,8 +134,10 @@ public class SavedLinkGroupService {
                                 .collect(Collectors.toList());
         }
 
-        public List<SavedLinkGroupDto> getGlobalTopClickedLinks(String clerkId) {
-                return savedLinkGroupRepository.findTopClickedByUserClerkId(clerkId)
+        public List<SavedLinkGroupDto> getGlobalTopClickedLinks(String email) {
+                User user = userService.findByEmail(email);
+
+                return savedLinkGroupRepository.findTopClickedByUserId(user.getId())
                                 .stream()
                                 .map(this::convertToDto)
                                 .collect(Collectors.toList());

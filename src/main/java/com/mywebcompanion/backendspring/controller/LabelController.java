@@ -4,11 +4,11 @@ import com.mywebcompanion.backendspring.dto.LabelDto;
 import com.mywebcompanion.backendspring.service.LabelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/labels")
@@ -18,59 +18,57 @@ public class LabelController {
     private final LabelService labelService;
 
     @GetMapping
-    public ResponseEntity<List<LabelDto>> getAllLabels(Authentication authentication) {
-        String clerkId = authentication.getName();
-        List<LabelDto> labels = labelService.getAllLabelsByUserId(clerkId);
+    public ResponseEntity<List<LabelDto>> getAllLabels(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        List<LabelDto> labels = labelService.getAllLabelsByUserEmail(email);
         return ResponseEntity.ok(labels);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<LabelDto> getLabelById(
-            Authentication authentication,
-            @PathVariable String id) {
-        String clerkId = authentication.getName();
-        LabelDto label = labelService.getLabelById(clerkId, id);
-        return ResponseEntity.ok(label);
     }
 
     @PostMapping
     public ResponseEntity<LabelDto> createLabel(
-            Authentication authentication,
-            @RequestBody Map<String, String> request) {
-        String clerkId = authentication.getName();
-        String name = request.get("name");
-
-        if (name == null || name.trim().isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        LabelDto createdLabel = labelService.createLabel(clerkId, name.trim());
-        return ResponseEntity.ok(createdLabel);
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam String name) {
+        String email = userDetails.getUsername();
+        LabelDto label = labelService.createLabel(email, name);
+        return ResponseEntity.ok(label);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{labelId}")
     public ResponseEntity<LabelDto> updateLabel(
-            Authentication authentication,
-            @PathVariable String id,
-            @RequestBody Map<String, String> request) {
-        String clerkId = authentication.getName();
-        String name = request.get("name");
-
-        if (name == null || name.trim().isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        LabelDto updatedLabel = labelService.updateLabel(clerkId, id, name.trim());
-        return ResponseEntity.ok(updatedLabel);
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable String labelId,
+            @RequestParam String name) {
+        String email = userDetails.getUsername();
+        LabelDto label = labelService.updateLabel(email, labelId, name);
+        return ResponseEntity.ok(label);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{labelId}")
     public ResponseEntity<Void> deleteLabel(
-            Authentication authentication,
-            @PathVariable String id,
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable String labelId,
             @RequestParam(defaultValue = "false") boolean forceDelete) {
-        String clerkId = authentication.getName();
-        labelService.deleteLabel(clerkId, id, forceDelete);
-        return ResponseEntity.noContent().build();
+        String email = userDetails.getUsername();
+        labelService.deleteLabel(email, labelId, forceDelete);
+        return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/{labelId}")
+    public ResponseEntity<LabelDto> getLabelById(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable String labelId) {
+        String email = userDetails.getUsername();
+        LabelDto label = labelService.getLabelById(email, labelId);
+        return ResponseEntity.ok(label);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<LabelDto>> searchLabels(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam String keyword) {
+        String email = userDetails.getUsername();
+        List<LabelDto> labels = labelService.searchLabels(email, keyword);
+        return ResponseEntity.ok(labels);
+    }
+
 }

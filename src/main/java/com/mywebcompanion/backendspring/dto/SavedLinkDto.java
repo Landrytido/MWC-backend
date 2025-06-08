@@ -11,4 +11,5 @@ public class SavedLinkDto {
     private String title;
     private String description;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

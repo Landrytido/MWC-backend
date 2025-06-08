@@ -36,21 +36,23 @@ public class FileService {
     @Value("${app.upload.max-size:10485760}") // 10MB par défaut
     private Long maxFileSize;
 
-    public List<FileDto> getAllFilesByClerkId(String clerkId) {
-        return fileRepository.findByUserClerkIdOrderByCreatedAtDesc(clerkId)
+    public List<FileDto> getAllFilesByUserEmail(String email) {
+        User user = userService.findByEmail(email);
+        return fileRepository.findByUserIdOrderByCreatedAtDesc(user.getId())
                 .stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
-    public List<FileDto> getImagesByClerkId(String clerkId) {
-        return fileRepository.findByUserClerkIdAndContentTypeStartingWithOrderByCreatedAtDesc(clerkId, "image/")
+    public List<FileDto> getImagesByUserEmail(String email) {
+        User user = userService.findByEmail(email);
+        return fileRepository.findByUserIdAndContentTypeStartingWithOrderByCreatedAtDesc(user.getId(), "image/")
                 .stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
-    public FileUploadResponseDto uploadFile(String clerkId, MultipartFile file) throws IOException {
+    public FileUploadResponseDto uploadFile(String email, MultipartFile file) throws IOException {
         // Validations
         if (file.isEmpty()) {
             throw new RuntimeException("Le fichier est vide");
@@ -60,13 +62,13 @@ public class FileService {
             throw new RuntimeException("Le fichier est trop volumineux (max: " + (maxFileSize / 1024 / 1024) + "MB)");
         }
 
-        // 🔧 CORRECTION 1: Validation du nom de fichier
+        // Validation du nom de fichier
         String originalFileName = file.getOriginalFilename();
         if (originalFileName == null || originalFileName.trim().isEmpty()) {
             throw new RuntimeException("Le nom du fichier est invalide");
         }
 
-        User user = userService.findByClerkId(clerkId);
+        User user = userService.findByEmail(email);
 
         // Nettoyer le nom de fichier
         String cleanedFileName = StringUtils.cleanPath(originalFileName);
@@ -79,7 +81,8 @@ public class FileService {
             Files.createDirectories(uploadPath);
         }
 
-        Path userUploadPath = uploadPath.resolve(clerkId);
+        // Utiliser l'ID utilisateur au lieu du clerkId pour les dossiers
+        Path userUploadPath = uploadPath.resolve("user_" + user.getId());
         if (!Files.exists(userUploadPath)) {
             Files.createDirectories(userUploadPath);
         }
@@ -88,7 +91,7 @@ public class FileService {
         Path destinationPath = userUploadPath.resolve(uniqueFileName);
         Files.copy(file.getInputStream(), destinationPath, StandardCopyOption.REPLACE_EXISTING);
 
-        // 🔧 CORRECTION 2: Créer l'entité sans URI temporaire
+        // Créer l'entité sans URI temporaire
         File fileEntity = new File();
         fileEntity.setFilename(uniqueFileName);
         fileEntity.setInitialFilename(cleanedFileName);
@@ -98,7 +101,7 @@ public class FileService {
         fileEntity.setUser(user);
         // URI sera définie après la sauvegarde
 
-        // 🔧 CORRECTION 3: Une seule sauvegarde avec URI correcte
+        // Une seule sauvegarde avec URI correcte
         File savedFile = fileRepository.save(fileEntity);
 
         // Maintenant on peut définir l'URI avec l'ID réel
@@ -115,8 +118,9 @@ public class FileService {
         return response;
     }
 
-    public byte[] downloadFile(String clerkId, Long fileId) throws IOException {
-        File file = fileRepository.findByIdAndUserClerkId(fileId, clerkId)
+    public byte[] downloadFile(String email, Long fileId) throws IOException {
+        User user = userService.findByEmail(email);
+        File file = fileRepository.findByIdAndUserId(fileId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Fichier non trouvé"));
 
         Path filePath = Paths.get(file.getPath());
@@ -127,15 +131,17 @@ public class FileService {
         return Files.readAllBytes(filePath);
     }
 
-    public FileDto getFileById(String clerkId, Long fileId) {
-        File file = fileRepository.findByIdAndUserClerkId(fileId, clerkId)
+    public FileDto getFileById(String email, Long fileId) {
+        User user = userService.findByEmail(email);
+        File file = fileRepository.findByIdAndUserId(fileId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Fichier non trouvé"));
 
         return convertToDto(file);
     }
 
-    public void deleteFile(String clerkId, Long fileId) throws IOException {
-        File file = fileRepository.findByIdAndUserClerkId(fileId, clerkId)
+    public void deleteFile(String email, Long fileId) throws IOException {
+        User user = userService.findByEmail(email);
+        File file = fileRepository.findByIdAndUserId(fileId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Fichier non trouvé"));
 
         // Supprimer le fichier physique
@@ -148,9 +154,10 @@ public class FileService {
         fileRepository.delete(file);
     }
 
-    public Map<String, Object> getFileStatistics(String clerkId) {
-        Long totalSize = fileRepository.getTotalFileSizeByUserClerkId(clerkId);
-        List<Object[]> countByType = fileRepository.countFilesByTypeAndUserClerkId(clerkId);
+    public Map<String, Object> getFileStatistics(String email) {
+        User user = userService.findByEmail(email);
+        Long totalSize = fileRepository.getTotalFileSizeByUserId(user.getId());
+        List<Object[]> countByType = fileRepository.countFilesByTypeAndUserId(user.getId());
 
         Map<String, Long> typeStats = countByType.stream()
                 .collect(Collectors.toMap(
@@ -158,7 +165,7 @@ public class FileService {
                         row -> (Long) row[1]));
 
         return Map.of(
-                "totalFiles", fileRepository.findByUserClerkIdOrderByCreatedAtDesc(clerkId).size(),
+                "totalFiles", fileRepository.findByUserIdOrderByCreatedAtDesc(user.getId()).size(),
                 "totalSizeMB", totalSize / 1024 / 1024,
                 "filesByType", typeStats);
     }

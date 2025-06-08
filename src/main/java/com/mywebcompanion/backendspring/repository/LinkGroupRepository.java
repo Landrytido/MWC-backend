@@ -10,19 +10,14 @@ import java.util.Optional;
 
 public interface LinkGroupRepository extends JpaRepository<LinkGroup, String> {
 
-    // Trouver tous les groupes d'un utilisateur
-    List<LinkGroup> findByUserClerkIdOrderByTitleAsc(String clerkId);
+    List<LinkGroup> findByUserIdOrderByTitleAsc(Long userId);
 
-    // Trouver un groupe par ID et utilisateur (sécurité)
-    Optional<LinkGroup> findByIdAndUserClerkId(String id, String clerkId);
+    Optional<LinkGroup> findByIdAndUserId(Long id, Long userId);
 
-    // Vérifier si un groupe appartient à un utilisateur
-    boolean existsByIdAndUserClerkId(String id, String clerkId);
+    List<LinkGroup> findByUserIdAndTitleContainingIgnoreCase(Long userId, String title);
 
-    // Compter le nombre de liens dans un groupe
-    @Query("SELECT COUNT(slg) FROM SavedLinkGroup slg WHERE slg.linkGroupId = :groupId")
-    Long countLinksByGroupId(@Param("groupId") String groupId);
+    Long countByUserId(Long userId);
 
-    // Supprimer un groupe par ID et utilisateur (sécurité)
-    void deleteByIdAndUserClerkId(String id, String clerkId);
+    @Query("SELECT COUNT(slg) FROM SavedLinkGroup slg WHERE slg.linkGroup.id = :groupId")
+    Long countLinksByGroupId(@Param("groupId") Long groupId);
 }

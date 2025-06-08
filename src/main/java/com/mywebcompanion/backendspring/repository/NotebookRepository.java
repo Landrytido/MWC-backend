@@ -4,25 +4,23 @@ import com.mywebcompanion.backendspring.model.Notebook;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface NotebookRepository extends JpaRepository<Notebook, Long> {
 
-    // Trouver tous les carnets d'un utilisateur, triés par titre
-    List<Notebook> findByUserClerkIdOrderByTitleAsc(String clerkId);
+    // Nouvelles méthodes basées sur userId (Spring Security + JWT)
+    List<Notebook> findByUserIdOrderByTitleAsc(Long userId);
 
-    // Trouver un carnet par ID et utilisateur (sécurité)
-    Optional<Notebook> findByIdAndUserClerkId(Long id, String clerkId);
+    Optional<Notebook> findByIdAndUserId(Long id, Long userId);
 
-    // Vérifier si un carnet appartient à un utilisateur
-    boolean existsByIdAndUserClerkId(Long id, String clerkId);
+    List<Notebook> findByUserIdAndTitleContainingIgnoreCase(Long userId, String title);
 
-    // Compter le nombre de notes dans un carnet
-    @Query("SELECT COUNT(n) FROM Note n WHERE n.notebook.id = :notebookId")
-    Long countNotesByNotebookId(@Param("notebookId") Long notebookId);
+    Long countByUserId(Long userId);
 
-    // Supprimer un carnet par ID et utilisateur (sécurité)
-    void deleteByIdAndUserClerkId(Long id, String clerkId);
+    @Query("SELECT COUNT(n) FROM Note n WHERE n.notebook.id = :notebookId AND n.user.id = :userId")
+    Long countNotesByNotebookIdAndUserId(@Param("notebookId") Long notebookId, @Param("userId") Long userId);
 }

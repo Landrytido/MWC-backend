@@ -4,25 +4,25 @@ import com.mywebcompanion.backendspring.model.Label;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface LabelRepository extends JpaRepository<Label, String> {
+@Repository
+public interface LabelRepository extends JpaRepository<Label, String> { // String au lieu de Long
 
-    // Trouver tous les labels d'un utilisateur
-    List<Label> findByUserIdOrderByNameAsc(Integer userId);
+    List<Label> findByUserIdOrderByNameAsc(Long userId);
 
-    // Trouver un label par nom et utilisateur
-    Optional<Label> findByNameAndUserId(String name, Integer userId);
+    Optional<Label> findByIdAndUserId(String id, Long userId); // String pour l'ID
 
-    // Vérifier si un label appartient à un utilisateur
-    boolean existsByIdAndUserId(String id, Integer userId);
+    Optional<Label> findByNameAndUserId(String name, Long userId);
 
-    // Compter le nombre de notes associées à un label
-    @Query("SELECT COUNT(n) FROM Note n JOIN n.labels l WHERE l.id = :labelId")
-    Long countNotesByLabelId(@Param("labelId") String labelId);
+    List<Label> findByUserIdAndNameContainingIgnoreCase(Long userId, String name);
 
-    // Supprimer un label par ID et utilisateur (sécurité)
-    void deleteByIdAndUserId(String id, Integer userId);
+    Long countByUserId(Long userId);
+
+    // labelId est maintenant String (UUID)
+    @Query("SELECT COUNT(n) FROM Note n JOIN n.labels l WHERE l.id = :labelId AND n.user.id = :userId")
+    Long countNotesByLabelIdAndUserId(@Param("labelId") String labelId, @Param("userId") Long userId);
 }

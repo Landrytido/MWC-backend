@@ -16,7 +16,6 @@ public class UserDto {
     private String email;
     private String firstName;
     private String lastName;
-    private String clerkId;
     private Boolean enabled;
     private Boolean emailVerified;
     private LocalDateTime createdAt;

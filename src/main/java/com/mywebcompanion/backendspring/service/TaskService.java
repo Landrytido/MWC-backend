@@ -21,45 +21,50 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final UserService userService;
 
-    public List<TaskDto> getAllTasksByClerkId(String clerkId) {
-        return taskRepository.findByUserClerkIdOrderByDueDateAscCreatedAtDesc(clerkId)
+    public List<TaskDto> getAllTasksByUserEmail(String email) {
+        User user = userService.findByEmail(email);
+        return taskRepository.findByUserIdOrderByDueDateAscCreatedAtDesc(user.getId())
                 .stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
-    public List<TaskDto> getCompletedTasks(String clerkId) {
-        return taskRepository.findByUserClerkIdAndCompletedTrueOrderByUpdatedAtDesc(clerkId)
+    public List<TaskDto> getCompletedTasks(String email) {
+        User user = userService.findByEmail(email);
+        return taskRepository.findByUserIdAndCompletedTrueOrderByUpdatedAtDesc(user.getId())
                 .stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
-    public List<TaskDto> getPendingTasks(String clerkId) {
-        return taskRepository.findByUserClerkIdAndCompletedFalseOrderByDueDateAscCreatedAtDesc(clerkId)
+    public List<TaskDto> getPendingTasks(String email) {
+        User user = userService.findByEmail(email);
+        return taskRepository.findByUserIdAndCompletedFalseOrderByDueDateAscCreatedAtDesc(user.getId())
                 .stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
-    public List<TaskDto> getOverdueTasks(String clerkId) {
-        return taskRepository.findOverdueTasks(clerkId, LocalDateTime.now())
+    public List<TaskDto> getOverdueTasks(String email) {
+        User user = userService.findByEmail(email);
+        return taskRepository.findOverdueTasks(user.getId(), LocalDateTime.now())
                 .stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
-    public List<TaskDto> getTasksDueInDays(String clerkId, int days) {
+    public List<TaskDto> getTasksDueInDays(String email, int days) {
+        User user = userService.findByEmail(email);
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime futureDate = now.plusDays(days);
-        return taskRepository.findTasksDueInPeriod(clerkId, now, futureDate)
+        return taskRepository.findTasksDueInPeriod(user.getId(), now, futureDate)
                 .stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
-    public TaskDto createTask(String clerkId, TaskDto taskDto) {
-        User user = userService.findByClerkId(clerkId);
+    public TaskDto createTask(String email, TaskDto taskDto) {
+        User user = userService.findByEmail(email);
 
         Task task = new Task();
         task.setTitle(taskDto.getTitle());
@@ -73,8 +78,9 @@ public class TaskService {
         return convertToDto(savedTask);
     }
 
-    public TaskDto updateTask(String clerkId, Long taskId, TaskDto taskDto) {
-        Task task = taskRepository.findByIdAndUserClerkId(taskId, clerkId)
+    public TaskDto updateTask(String email, Long taskId, TaskDto taskDto) {
+        User user = userService.findByEmail(email);
+        Task task = taskRepository.findByIdAndUserId(taskId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Tâche non trouvée"));
 
         task.setTitle(taskDto.getTitle());
@@ -93,8 +99,9 @@ public class TaskService {
         return convertToDto(updatedTask);
     }
 
-    public TaskDto toggleTaskCompletion(String clerkId, Long taskId) {
-        Task task = taskRepository.findByIdAndUserClerkId(taskId, clerkId)
+    public TaskDto toggleTaskCompletion(String email, Long taskId) {
+        User user = userService.findByEmail(email);
+        Task task = taskRepository.findByIdAndUserId(taskId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Tâche non trouvée"));
 
         task.setCompleted(!task.getCompleted());
@@ -102,22 +109,25 @@ public class TaskService {
         return convertToDto(updatedTask);
     }
 
-    public void deleteTask(String clerkId, Long taskId) {
-        Task task = taskRepository.findByIdAndUserClerkId(taskId, clerkId)
+    public void deleteTask(String email, Long taskId) {
+        User user = userService.findByEmail(email);
+        Task task = taskRepository.findByIdAndUserId(taskId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Tâche non trouvée"));
 
         taskRepository.delete(task);
     }
 
-    public TaskDto getTaskById(String clerkId, Long taskId) {
-        Task task = taskRepository.findByIdAndUserClerkId(taskId, clerkId)
+    public TaskDto getTaskById(String email, Long taskId) {
+        User user = userService.findByEmail(email);
+        Task task = taskRepository.findByIdAndUserId(taskId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Tâche non trouvée"));
 
         return convertToDto(task);
     }
 
-    public Long getPendingTaskCount(String clerkId) {
-        return taskRepository.countByUserClerkIdAndCompletedFalse(clerkId);
+    public Long getPendingTaskCount(String email) {
+        User user = userService.findByEmail(email);
+        return taskRepository.countByUserIdAndCompletedFalse(user.getId());
     }
 
     private TaskDto convertToDto(Task task) {

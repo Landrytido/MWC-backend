@@ -15,8 +15,6 @@ public interface DailyTaskRepository extends JpaRepository<DailyTask, Long> {
     // Nouvelles méthodes basées sur userId (Spring Security + JWT)
     List<DailyTask> findByUserIdAndScheduledDateOrderByOrderIndexAsc(Long userId, LocalDate date);
 
-    Optional<DailyPlan> findByUserIdAndDate(Long userId, LocalDate date);
-
     Long countByUserIdAndScheduledDate(Long userId, LocalDate date);
 
     Optional<DailyTask> findByIdAndUserId(Long id, Long userId);
