@@ -4,7 +4,8 @@ import com.mywebcompanion.backendspring.dto.SavedLinkDto;
 import com.mywebcompanion.backendspring.service.SavedLinkService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,33 +18,37 @@ public class SavedLinkController {
     private final SavedLinkService savedLinkService;
 
     @GetMapping
-    public ResponseEntity<List<SavedLinkDto>> getAllLinks(Authentication authentication) {
-        String clerkId = authentication.getName();
-        List<SavedLinkDto> links = savedLinkService.getLinksByClerkId(clerkId);
+    public ResponseEntity<List<SavedLinkDto>> getAllLinks(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        List<SavedLinkDto> links = savedLinkService.getLinksByUserEmail(email);
         return ResponseEntity.ok(links);
     }
 
     @PostMapping
-    public ResponseEntity<SavedLinkDto> createLink(Authentication authentication, @RequestBody SavedLinkDto linkDto) {
-        String clerkId = authentication.getName();
-        SavedLinkDto createdLink = savedLinkService.createLink(clerkId, linkDto);
+    public ResponseEntity<SavedLinkDto> createLink(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody SavedLinkDto linkDto) {
+        String email = userDetails.getUsername();
+        SavedLinkDto createdLink = savedLinkService.createLink(email, linkDto);
         return ResponseEntity.ok(createdLink);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<SavedLinkDto> updateLink(
-            Authentication authentication,
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id,
             @RequestBody SavedLinkDto linkDto) {
-        String clerkId = authentication.getName();
-        SavedLinkDto updatedLink = savedLinkService.updateLink(clerkId, id, linkDto);
+        String email = userDetails.getUsername();
+        SavedLinkDto updatedLink = savedLinkService.updateLink(email, id, linkDto);
         return ResponseEntity.ok(updatedLink);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteLink(Authentication authentication, @PathVariable Long id) {
-        String clerkId = authentication.getName();
-        savedLinkService.deleteLink(clerkId, id);
+    public ResponseEntity<Void> deleteLink(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id) {
+        String email = userDetails.getUsername();
+        savedLinkService.deleteLink(email, id);
         return ResponseEntity.noContent().build();
     }
 }

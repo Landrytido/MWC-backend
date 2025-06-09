@@ -4,7 +4,8 @@ import com.mywebcompanion.backendspring.dto.NotebookDto;
 import com.mywebcompanion.backendspring.service.NotebookService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,56 +18,56 @@ public class NotebookController {
     private final NotebookService notebookService;
 
     @GetMapping
-    public ResponseEntity<List<NotebookDto>> getAllNotebooks(Authentication authentication) {
-        String clerkId = authentication.getName();
-        List<NotebookDto> notebooks = notebookService.getAllNotebooksByClerkId(clerkId);
+    public ResponseEntity<List<NotebookDto>> getAllNotebooks(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        List<NotebookDto> notebooks = notebookService.getAllNotebooksByUserEmail(email);
         return ResponseEntity.ok(notebooks);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<NotebookDto> getNotebookById(
-            Authentication authentication,
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id) {
-        String clerkId = authentication.getName();
-        NotebookDto notebook = notebookService.getNotebookById(clerkId, id);
+        String email = userDetails.getUsername();
+        NotebookDto notebook = notebookService.getNotebookById(email, id);
         return ResponseEntity.ok(notebook);
     }
 
     @PostMapping
     public ResponseEntity<NotebookDto> createNotebook(
-            Authentication authentication,
+            @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody NotebookDto notebookDto) {
-        String clerkId = authentication.getName();
+        String email = userDetails.getUsername();
 
         if (notebookDto.getTitle() == null || notebookDto.getTitle().trim().isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
 
-        NotebookDto createdNotebook = notebookService.createNotebook(clerkId, notebookDto);
+        NotebookDto createdNotebook = notebookService.createNotebook(email, notebookDto);
         return ResponseEntity.ok(createdNotebook);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<NotebookDto> updateNotebook(
-            Authentication authentication,
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id,
             @RequestBody NotebookDto notebookDto) {
-        String clerkId = authentication.getName();
+        String email = userDetails.getUsername();
 
         if (notebookDto.getTitle() == null || notebookDto.getTitle().trim().isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
 
-        NotebookDto updatedNotebook = notebookService.updateNotebook(clerkId, id, notebookDto);
+        NotebookDto updatedNotebook = notebookService.updateNotebook(email, id, notebookDto);
         return ResponseEntity.ok(updatedNotebook);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteNotebook(
-            Authentication authentication,
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id) {
-        String clerkId = authentication.getName();
-        notebookService.deleteNotebook(clerkId, id);
+        String email = userDetails.getUsername();
+        notebookService.deleteNotebook(email, id);
         return ResponseEntity.noContent().build();
     }
 }

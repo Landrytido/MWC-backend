@@ -1,6 +1,5 @@
 package com.mywebcompanion.backendspring.service;
 
-import com.mywebcompanion.backendspring.dto.UserDto;
 import com.mywebcompanion.backendspring.model.User;
 import com.mywebcompanion.backendspring.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

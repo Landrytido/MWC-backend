@@ -4,13 +4,11 @@ import com.mywebcompanion.backendspring.dto.NoteTaskDto;
 import com.mywebcompanion.backendspring.service.NoteTaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/note-tasks")
@@ -31,14 +29,14 @@ public class NoteTaskController {
     @GetMapping
     public ResponseEntity<List<NoteTaskDto>> getAllNoteTasks(@AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails.getUsername();
-        List<NoteTaskDto> tasks = noteTaskService.getAllNoteTasksByUserId(email);
+        List<NoteTaskDto> tasks = noteTaskService.getAllNoteTasksByUserEmail(email);
         return ResponseEntity.ok(tasks);
     }
 
     @GetMapping("/pending")
     public ResponseEntity<List<NoteTaskDto>> getPendingNoteTasks(@AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails.getUsername();
-        List<NoteTaskDto> tasks = noteTaskService.getPendingNoteTasksByUserId(email);
+        List<NoteTaskDto> tasks = noteTaskService.getPendingNoteTasksByUserEmail(email);
         return ResponseEntity.ok(tasks);
     }
 
@@ -78,7 +76,7 @@ public class NoteTaskController {
             @PathVariable Long taskId) {
         String email = userDetails.getUsername();
         noteTaskService.deleteNoteTask(email, taskId);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{taskId}")

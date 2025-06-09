@@ -4,7 +4,8 @@ import com.mywebcompanion.backendspring.dto.NoteDto;
 import com.mywebcompanion.backendspring.service.NoteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,65 +19,69 @@ public class NoteController {
     private final NoteService noteService;
 
     @GetMapping
-    public ResponseEntity<List<NoteDto>> getAllNotes(Authentication authentication) {
-        String clerkId = authentication.getName();
-        List<NoteDto> notes = noteService.getNotesByClerkId(clerkId);
+    public ResponseEntity<List<NoteDto>> getAllNotes(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        List<NoteDto> notes = noteService.getNotesByUserEmail(email);
         return ResponseEntity.ok(notes);
     }
 
     @PostMapping
-    public ResponseEntity<NoteDto> createNote(Authentication authentication, @RequestBody NoteDto noteDto) {
-        String clerkId = authentication.getName();
-        NoteDto createdNote = noteService.createNote(clerkId, noteDto);
+    public ResponseEntity<NoteDto> createNote(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody NoteDto noteDto) {
+        String email = userDetails.getUsername();
+        NoteDto createdNote = noteService.createNote(email, noteDto);
         return ResponseEntity.ok(createdNote);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<NoteDto> updateNote(
-            Authentication authentication,
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id,
             @RequestBody NoteDto noteDto) {
-        String clerkId = authentication.getName();
-        NoteDto updatedNote = noteService.updateNote(clerkId, id, noteDto);
+        String email = userDetails.getUsername();
+        NoteDto updatedNote = noteService.updateNote(email, id, noteDto);
         return ResponseEntity.ok(updatedNote);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteNote(Authentication authentication, @PathVariable Long id) {
-        String clerkId = authentication.getName();
-        noteService.deleteNote(clerkId, id);
+    public ResponseEntity<Void> deleteNote(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id) {
+        String email = userDetails.getUsername();
+        noteService.deleteNote(email, id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/notebooks/{notebookId}")
     public ResponseEntity<NoteDto> createNoteInNotebook(
-            Authentication authentication,
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long notebookId,
             @RequestBody NoteDto noteDto) {
-        String clerkId = authentication.getName();
-        NoteDto createdNote = noteService.createNoteInNotebook(clerkId, noteDto, notebookId);
+        String email = userDetails.getUsername();
+        NoteDto createdNote = noteService.createNoteInNotebook(email, noteDto, notebookId);
         return ResponseEntity.ok(createdNote);
     }
 
     @PutMapping("/{id}/notebook")
     public ResponseEntity<NoteDto> moveNoteToNotebook(
-            Authentication authentication,
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id,
             @RequestBody Map<String, Object> request) {
-        String clerkId = authentication.getName();
+        String email = userDetails.getUsername();
         Long notebookId = request.get("notebookId") != null
                 ? Long.valueOf(request.get("notebookId").toString())
                 : null;
-        NoteDto updatedNote = noteService.moveNoteToNotebook(clerkId, id, notebookId);
+        NoteDto updatedNote = noteService.moveNoteToNotebook(email, id, notebookId);
         return ResponseEntity.ok(updatedNote);
     }
 
     @GetMapping("/notebooks/{notebookId}/notes")
     public ResponseEntity<List<NoteDto>> getNotesByNotebook(
-            Authentication authentication,
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long notebookId) {
-        String clerkId = authentication.getName();
-        List<NoteDto> notes = noteService.getNotesByNotebookId(clerkId, notebookId);
+        String email = userDetails.getUsername();
+        List<NoteDto> notes = noteService.getNotesByNotebookId(email, notebookId);
         return ResponseEntity.ok(notes);
     }
 }

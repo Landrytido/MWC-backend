@@ -81,7 +81,6 @@ public class FileService {
             Files.createDirectories(uploadPath);
         }
 
-        // Utiliser l'ID utilisateur au lieu du clerkId pour les dossiers
         Path userUploadPath = uploadPath.resolve("user_" + user.getId());
         if (!Files.exists(userUploadPath)) {
             Files.createDirectories(userUploadPath);

@@ -24,6 +24,9 @@ public class NoteTask {
     @Column(nullable = false)
     private Boolean completed = false;
 
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "note_id", nullable = false)
     private Note note;

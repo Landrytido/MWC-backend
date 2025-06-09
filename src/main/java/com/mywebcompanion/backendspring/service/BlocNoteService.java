@@ -18,7 +18,6 @@ public class BlocNoteService {
     private final BlocNoteRepository blocNoteRepository;
     private final UserService userService;
 
-    // Remplacer clerkId par email de l'utilisateur authentifié
     public BlocNoteDto getBlocNoteByUserEmail(String email) {
         System.out.println("🔍 getBlocNoteByUserEmail - email: " + email);
 

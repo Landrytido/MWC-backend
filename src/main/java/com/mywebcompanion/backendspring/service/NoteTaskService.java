@@ -10,12 +10,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class NoteTaskService {
 
     private final NoteTaskRepository noteTaskRepository;
@@ -23,164 +24,129 @@ public class NoteTaskService {
     private final UserService userService;
 
     public List<NoteTaskDto> getNoteTasksByNoteId(String email, Long noteId) {
+        List<NoteTask> tasks = noteTaskRepository.findByNoteIdAndParentIsNullOrderByCreatedAtAsc(noteId);
+        return tasks.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<NoteTaskDto> getAllNoteTasksByUserEmail(String email) {
+        User user = userService.findByEmail(email);
+        List<NoteTask> tasks = noteTaskRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
+        return tasks.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<NoteTaskDto> getPendingNoteTasksByUserEmail(String email) {
+        User user = userService.findByEmail(email);
+        List<NoteTask> tasks = noteTaskRepository.findByUserIdAndCompletedFalseOrderByCreatedAtDesc(user.getId());
+        return tasks.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public NoteTaskDto createNoteTask(String email, Long noteId, String title, Long parentId) {
         User user = userService.findByEmail(email);
 
         // Vérifier que la note appartient à l'utilisateur
         Note note = noteRepository.findByIdAndUserId(noteId, user.getId())
-                .orElseThrow(() -> new RuntimeException("Note non trouvée"));
+                .orElseThrow(() -> new RuntimeException("Note non trouvée ou accès non autorisé"));
 
-        return noteTaskRepository.findByNoteIdAndParentIsNullOrderByCreatedAtAsc(noteId)
-                .stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-    }
-
-    public List<NoteTaskDto> getAllNoteTasksByUserId(String email) {
-        User user = userService.findByEmail(email);
-        return noteTaskRepository.findByUserIdOrderByCreatedAtDesc(user.getId())
-                .stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-    }
-
-    public List<NoteTaskDto> getPendingNoteTasksByUserId(String email) {
-        User user = userService.findByEmail(email);
-        return noteTaskRepository.findByUserIdAndCompletedFalseOrderByCreatedAtDesc(user.getId())
-                .stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-    }
-
-    public NoteTaskDto createNoteTask(String email, Long noteId, String title, Long parentId) {
-        User user = userService.findByEmail(email);
-
-        Note note = noteRepository.findByIdAndUserId(noteId, user.getId())
-                .orElseThrow(() -> new RuntimeException("Note non trouvée"));
-
-        NoteTask noteTask = new NoteTask();
-        noteTask.setTitle(title);
-        noteTask.setNote(note);
-        noteTask.setUser(user);
+        NoteTask task = new NoteTask();
+        task.setTitle(title);
+        task.setNote(note);
+        task.setUser(user);
+        task.setCompleted(false);
 
         // Si c'est une sous-tâche
         if (parentId != null) {
             NoteTask parent = noteTaskRepository.findByIdAndUserId(parentId, user.getId())
                     .orElseThrow(() -> new RuntimeException("Tâche parent non trouvée"));
-            noteTask.setParent(parent);
+            task.setParent(parent);
         }
 
-        NoteTask savedTask = noteTaskRepository.save(noteTask);
+        NoteTask savedTask = noteTaskRepository.save(task);
         return convertToDto(savedTask);
     }
 
-    public NoteTaskDto updateNoteTask(String email, Long taskId, NoteTaskDto dto) {
+    @Transactional
+    public NoteTaskDto updateNoteTask(String email, Long taskId, NoteTaskDto request) {
         User user = userService.findByEmail(email);
-        NoteTask noteTask = noteTaskRepository.findByIdAndUserId(taskId, user.getId())
-                .orElseThrow(() -> new RuntimeException("Tâche non trouvée"));
+        NoteTask task = noteTaskRepository.findByIdAndUserId(taskId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Tâche non trouvée ou accès non autorisé"));
 
-        noteTask.setTitle(dto.getTitle());
+        if (request.getTitle() != null) {
+            task.setTitle(request.getTitle());
+        }
 
-        // Gestion de l'état de completion
-        if (dto.getCompleted() != null && !noteTask.getCompleted() && dto.getCompleted()) {
-            // Marquer comme complétée
-            noteTask.setCompleted(true);
-
-            // Si c'est une tâche parent, vérifier les sous-tâches
-            if (noteTask.getParent() == null && !noteTask.getSubtasks().isEmpty()) {
-                // Marquer toutes les sous-tâches comme complétées
-                for (NoteTask subtask : noteTask.getSubtasks()) {
-                    subtask.setCompleted(true);
-                    noteTaskRepository.save(subtask);
-                }
-            }
-        } else if (dto.getCompleted() != null) {
-            noteTask.setCompleted(dto.getCompleted());
-
-            // Si c'est une sous-tâche et qu'on la marque comme non complétée,
-            // s'assurer que la tâche parent n'est pas complétée
-            if (noteTask.getParent() != null && !dto.getCompleted()) {
-                NoteTask parent = noteTask.getParent();
-                if (parent.getCompleted()) {
-                    parent.setCompleted(false);
-                    noteTaskRepository.save(parent);
-                }
+        if (request.getCompleted() != null) {
+            task.setCompleted(request.getCompleted());
+            if (request.getCompleted()) {
+                task.setCompletedAt(LocalDateTime.now());
+            } else {
+                task.setCompletedAt(null);
             }
         }
 
-        NoteTask updatedTask = noteTaskRepository.save(noteTask);
+        NoteTask updatedTask = noteTaskRepository.save(task);
         return convertToDto(updatedTask);
     }
 
+    @Transactional
     public NoteTaskDto toggleNoteTaskCompletion(String email, Long taskId) {
         User user = userService.findByEmail(email);
-        NoteTask noteTask = noteTaskRepository.findByIdAndUserId(taskId, user.getId())
-                .orElseThrow(() -> new RuntimeException("Tâche non trouvée"));
+        NoteTask task = noteTaskRepository.findByIdAndUserId(taskId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Tâche non trouvée ou accès non autorisé"));
 
-        boolean newCompletionStatus = !noteTask.getCompleted();
-        noteTask.setCompleted(newCompletionStatus);
-
-        // Logique de cascade pour les sous-tâches/tâches parent
-        if (newCompletionStatus && noteTask.getParent() == null && !noteTask.getSubtasks().isEmpty()) {
-            // Marquer toutes les sous-tâches comme complétées
-            for (NoteTask subtask : noteTask.getSubtasks()) {
-                subtask.setCompleted(true);
-                noteTaskRepository.save(subtask);
-            }
-        } else if (!newCompletionStatus && noteTask.getParent() != null) {
-            // Si c'est une sous-tâche qu'on marque comme non complétée,
-            // s'assurer que la tâche parent n'est pas complétée
-            NoteTask parent = noteTask.getParent();
-            if (parent.getCompleted()) {
-                parent.setCompleted(false);
-                noteTaskRepository.save(parent);
-            }
+        task.setCompleted(!task.getCompleted());
+        if (task.getCompleted()) {
+            task.setCompletedAt(LocalDateTime.now());
+        } else {
+            task.setCompletedAt(null);
         }
 
-        NoteTask updatedTask = noteTaskRepository.save(noteTask);
+        NoteTask updatedTask = noteTaskRepository.save(task);
         return convertToDto(updatedTask);
     }
 
+    @Transactional
     public void deleteNoteTask(String email, Long taskId) {
         User user = userService.findByEmail(email);
-        NoteTask noteTask = noteTaskRepository.findByIdAndUserId(taskId, user.getId())
-                .orElseThrow(() -> new RuntimeException("Tâche non trouvée"));
+        NoteTask task = noteTaskRepository.findByIdAndUserId(taskId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Tâche non trouvée ou accès non autorisé"));
 
-        // La suppression en cascade des sous-tâches est gérée par JPA
-        noteTaskRepository.delete(noteTask);
+        noteTaskRepository.delete(task);
     }
 
     public NoteTaskDto getNoteTaskById(String email, Long taskId) {
         User user = userService.findByEmail(email);
-        NoteTask noteTask = noteTaskRepository.findByIdAndUserId(taskId, user.getId())
-                .orElseThrow(() -> new RuntimeException("Tâche non trouvée"));
+        NoteTask task = noteTaskRepository.findByIdAndUserId(taskId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Tâche non trouvée ou accès non autorisé"));
 
-        return convertToDto(noteTask);
+        return convertToDto(task);
     }
 
-    private NoteTaskDto convertToDto(NoteTask noteTask) {
+    private NoteTaskDto convertToDto(NoteTask task) {
         NoteTaskDto dto = new NoteTaskDto();
-        dto.setId(noteTask.getId());
-        dto.setTitle(noteTask.getTitle());
-        dto.setCompleted(noteTask.getCompleted());
-        dto.setNoteId(noteTask.getNote().getId());
-        dto.setParentId(noteTask.getParent() != null ? noteTask.getParent().getId() : null);
-        dto.setCreatedAt(noteTask.getCreatedAt());
-        dto.setUpdatedAt(noteTask.getUpdatedAt());
+        dto.setId(task.getId());
+        dto.setTitle(task.getTitle());
+        dto.setCompleted(task.getCompleted());
+        dto.setCompletedAt(task.getCompletedAt());
+        dto.setCreatedAt(task.getCreatedAt());
+        dto.setUpdatedAt(task.getUpdatedAt());
 
-        // Convertir les sous-tâches (récursif)
-        if (!noteTask.getSubtasks().isEmpty()) {
-            dto.setSubtasks(noteTask.getSubtasks().stream()
-                    .map(this::convertToDto)
-                    .collect(Collectors.toList()));
+        if (task.getNote() != null) {
+            dto.setNoteId(task.getNote().getId());
         }
 
-        // Statistiques pour les tâches parent
-        if (noteTask.getParent() == null) {
-            Long totalSubtasks = noteTaskRepository.countSubtasksByParentId(noteTask.getId());
-            Long completedSubtasks = noteTaskRepository.countCompletedSubtasksByParentId(noteTask.getId());
-            dto.setTotalSubtasks(totalSubtasks.intValue());
-            dto.setCompletedSubtasks(completedSubtasks.intValue());
+        if (task.getParent() != null) {
+            dto.setParentId(task.getParent().getId());
         }
+
+        dto.setTotalSubtasks(noteTaskRepository.countSubtasksByParentId(task.getId()));
+        dto.setCompletedSubtasks(noteTaskRepository.countCompletedSubtasksByParentId(task.getId()));
 
         return dto;
     }

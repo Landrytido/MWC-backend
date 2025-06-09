@@ -15,7 +15,7 @@ import java.util.List;
 public class LinkGroup {
 
     @Id
-    private String id; // UUID comme dans Prisma
+    private String id;
 
     @Column(nullable = false)
     private String title;

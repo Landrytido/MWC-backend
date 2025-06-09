@@ -13,10 +13,12 @@ public class NoteTaskDto {
     private Long noteId;
     private Long parentId;
     private List<NoteTaskDto> subtasks;
+    private LocalDateTime completedAt;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     // Statistiques pour les tâches avec sous-tâches
-    private Integer totalSubtasks;
-    private Integer completedSubtasks;
+    private Long totalSubtasks;
+    private Long completedSubtasks;
 }

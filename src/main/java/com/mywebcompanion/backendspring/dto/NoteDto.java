@@ -10,6 +10,7 @@ public class NoteDto {
     private String title;
     private String content;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private Long commentCount;
     private Long taskCount;
     private Long completedTaskCount;

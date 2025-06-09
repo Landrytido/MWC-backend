@@ -9,7 +9,6 @@ import java.util.Optional;
 @Repository
 public interface BlocNoteRepository extends JpaRepository<BlocNote, Long> {
 
-    // Remplacer les méthodes Clerk par des méthodes basées sur User ID
     Optional<BlocNote> findByUserId(Long userId);
 
     boolean existsByUserId(Long userId);

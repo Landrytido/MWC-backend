@@ -107,7 +107,6 @@ public class CommentService {
         dto.setNoteId(comment.getNote().getId());
         dto.setCreatedAt(comment.getCreatedAt());
 
-        // Convertir l'auteur en UserDto (sans clerkId)
         UserDto authorDto = new UserDto();
         authorDto.setId(comment.getUser().getId());
         authorDto.setEmail(comment.getUser().getEmail());

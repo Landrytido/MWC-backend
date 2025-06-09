@@ -4,7 +4,8 @@ import com.mywebcompanion.backendspring.dto.TaskDto;
 import com.mywebcompanion.backendspring.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,114 +18,103 @@ public class TaskController {
 
     private final TaskService taskService;
 
-    // Obtenir toutes les tâches
     @GetMapping
-    public ResponseEntity<List<TaskDto>> getAllTasks(Authentication authentication) {
-        String clerkId = authentication.getName();
-        List<TaskDto> tasks = taskService.getAllTasksByClerkId(clerkId);
+    public ResponseEntity<List<TaskDto>> getAllTasks(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        List<TaskDto> tasks = taskService.getAllTasksByUserEmail(email);
         return ResponseEntity.ok(tasks);
     }
 
-    // Obtenir les tâches en attente
     @GetMapping("/pending")
-    public ResponseEntity<List<TaskDto>> getPendingTasks(Authentication authentication) {
-        String clerkId = authentication.getName();
-        List<TaskDto> tasks = taskService.getPendingTasks(clerkId);
+    public ResponseEntity<List<TaskDto>> getPendingTasks(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        List<TaskDto> tasks = taskService.getPendingTasks(email);
         return ResponseEntity.ok(tasks);
     }
 
-    // Obtenir les tâches complétées
     @GetMapping("/completed")
-    public ResponseEntity<List<TaskDto>> getCompletedTasks(Authentication authentication) {
-        String clerkId = authentication.getName();
-        List<TaskDto> tasks = taskService.getCompletedTasks(clerkId);
+    public ResponseEntity<List<TaskDto>> getCompletedTasks(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        List<TaskDto> tasks = taskService.getCompletedTasks(email);
         return ResponseEntity.ok(tasks);
     }
 
-    // Obtenir les tâches en retard
     @GetMapping("/overdue")
-    public ResponseEntity<List<TaskDto>> getOverdueTasks(Authentication authentication) {
-        String clerkId = authentication.getName();
-        List<TaskDto> tasks = taskService.getOverdueTasks(clerkId);
+    public ResponseEntity<List<TaskDto>> getOverdueTasks(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        List<TaskDto> tasks = taskService.getOverdueTasks(email);
         return ResponseEntity.ok(tasks);
     }
 
-    // Obtenir les tâches dues dans les prochains X jours
     @GetMapping("/due-in-days")
     public ResponseEntity<List<TaskDto>> getTasksDueInDays(
-            Authentication authentication,
+            @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(defaultValue = "7") int days) {
-        String clerkId = authentication.getName();
-        List<TaskDto> tasks = taskService.getTasksDueInDays(clerkId, days);
+        String email = userDetails.getUsername();
+        List<TaskDto> tasks = taskService.getTasksDueInDays(email, days);
         return ResponseEntity.ok(tasks);
     }
 
-    // Obtenir une tâche par ID
     @GetMapping("/{id}")
     public ResponseEntity<TaskDto> getTaskById(
-            Authentication authentication,
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id) {
-        String clerkId = authentication.getName();
-        TaskDto task = taskService.getTaskById(clerkId, id);
+        String email = userDetails.getUsername();
+        TaskDto task = taskService.getTaskById(email, id);
         return ResponseEntity.ok(task);
     }
 
-    // Créer une nouvelle tâche
     @PostMapping
     public ResponseEntity<TaskDto> createTask(
-            Authentication authentication,
+            @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody TaskDto taskDto) {
-        String clerkId = authentication.getName();
+        String email = userDetails.getUsername();
 
         if (taskDto.getTitle() == null || taskDto.getTitle().trim().isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
 
-        TaskDto createdTask = taskService.createTask(clerkId, taskDto);
+        TaskDto createdTask = taskService.createTask(email, taskDto);
         return ResponseEntity.ok(createdTask);
     }
 
-    // Mettre à jour une tâche
     @PutMapping("/{id}")
     public ResponseEntity<TaskDto> updateTask(
-            Authentication authentication,
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id,
             @RequestBody TaskDto taskDto) {
-        String clerkId = authentication.getName();
+        String email = userDetails.getUsername();
 
         if (taskDto.getTitle() == null || taskDto.getTitle().trim().isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
 
-        TaskDto updatedTask = taskService.updateTask(clerkId, id, taskDto);
+        TaskDto updatedTask = taskService.updateTask(email, id, taskDto);
         return ResponseEntity.ok(updatedTask);
     }
 
-    // Basculer l'état de completion d'une tâche
     @PutMapping("/{id}/toggle")
     public ResponseEntity<TaskDto> toggleTaskCompletion(
-            Authentication authentication,
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id) {
-        String clerkId = authentication.getName();
-        TaskDto updatedTask = taskService.toggleTaskCompletion(clerkId, id);
+        String email = userDetails.getUsername();
+        TaskDto updatedTask = taskService.toggleTaskCompletion(email, id);
         return ResponseEntity.ok(updatedTask);
     }
 
-    // Supprimer une tâche
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTask(
-            Authentication authentication,
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id) {
-        String clerkId = authentication.getName();
-        taskService.deleteTask(clerkId, id);
+        String email = userDetails.getUsername();
+        taskService.deleteTask(email, id);
         return ResponseEntity.noContent().build();
     }
 
-    // Obtenir le nombre de tâches en attente
     @GetMapping("/pending/count")
-    public ResponseEntity<Map<String, Long>> getPendingTaskCount(Authentication authentication) {
-        String clerkId = authentication.getName();
-        Long count = taskService.getPendingTaskCount(clerkId);
+    public ResponseEntity<Map<String, Long>> getPendingTaskCount(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        Long count = taskService.getPendingTaskCount(email);
         return ResponseEntity.ok(Map.of("count", count));
     }
 }
