@@ -1,16 +1,15 @@
 package com.mywebcompanion.backendspring.controller;
 
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-
 import com.mywebcompanion.backendspring.dto.BlocNoteDto;
 import com.mywebcompanion.backendspring.service.BlocNoteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/bloc-notes")
+@RequestMapping("/api/bloc-note")
 @RequiredArgsConstructor
 public class BlocNoteController {
 
@@ -23,7 +22,7 @@ public class BlocNoteController {
         return ResponseEntity.ok(blocNote);
     }
 
-    @PostMapping
+    @PutMapping
     public ResponseEntity<BlocNoteDto> upsertBlocNote(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody BlocNoteDto request) {

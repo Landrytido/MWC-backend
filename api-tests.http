@@ -1,52 +1,62 @@
-### MY WEB COMPANION - API TESTS
 
 @baseUrl = http://localhost:8080
-@authToken = Bearer eyJhbGciOiJSUzI1NiIsImNhdCI6ImNsX0I3ZDRQRDExMUFBQSIsImtpZCI6Imluc18yd1Jsb2hkRWJnOThFTlpYcFJEaVNtcmlQUWUiLCJ0eXAiOiJKV1QifQ.eyJhenAiOiJodHRwOi8vbG9jYWxob3N0OjUxNzMiLCJleHAiOjE3NDc2MzIzNzUsImZ2YSI6WzAsLTFdLCJpYXQiOjE3NDc2MzIzMTUsImlzcyI6Imh0dHBzOi8vbXVzaWNhbC1zYWxtb24tNjYuY2xlcmsuYWNjb3VudHMuZGV2IiwibmJmIjoxNzQ3NjMyMzA1LCJzaWQiOiJzZXNzXzJ4SWoweG9PWEdOcVNaR3VpQk83dnh2YnREcyIsInN1YiI6InVzZXJfMnd4T01zRDFpVHVKanJONVdGV0NNaUtlZDVEIiwidiI6Mn0.ASgWayfs35UOjeuZeJCP1L7Jn7PKb4gkde181cIKdGELKNdmg6OH3UhVWsygxsy2dfs3qmAxP6Jwv1LYBU_85Gzto4dgnqvHzwGHMdCMcEUQ2j7bTrFrY7ooD81PqunV31i9d6Hby2g5QcLoSwYFQwWLOgPyAcEo0qz3fUA9dzN4I_wf-o3PZ_Db4TsOmA9wQQMexvKluuYkDqmNoeugrkAEjIcu8Uc3hht6JNCcLZe6hCNxpm9l7gAMY0TlptAO5CPl-SwoTUGZEYXlTS929MK97aPH9KBYSZ_87kVYX9xJgnVM1vCCoeeNcvRgXBlHSHsIE7l3LF9X3boVXe_CjA
- 
+@authToken = eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsInN1YiI6InRlc3RAZXhhbXBsZS5jb20iLCJpYXQiOjE3NDk0MzQ0NzcsImV4cCI6MTc0OTUyMDg3N30.LjSfrfz-tqT89XZLwwvcuQ0IQ0gGfbFdF9yqvGrbTUc
 
-### AUTH - GET USER PROFILE
+### HEALTH CHECK
+GET {{baseUrl}}/api/health
+
+### Check API health
+GET http://localhost:8080/api/health
+### AUTHENTIFICATION
+
+### Register new user
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "motdepasse123",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+
+### Login user
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "motdepasse123"
+}
+
+### Refresh token
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "YOUR_REFRESH_TOKEN_HERE"
+}
+
+### Logout
+POST {{baseUrl}}/api/auth/logout
+Authorization: {{authToken}}
+
+### USER PROFILE
 GET {{baseUrl}}/api/users/profile
 Authorization: {{authToken}}
 
-### LABELS API
+GET {{baseUrl}}/api/users/me
+Authorization: {{authToken}}
 
-### Get all labels
 GET {{baseUrl}}/api/labels
 Authorization: {{authToken}}
 
-### Create a new label
-POST {{baseUrl}}/api/labels
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "name": "Important"
-}
-
-### Update a label
-PUT {{baseUrl}}/api/labels/LABEL_ID_HERE
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "name": "Very Important"
-}
-
-### Delete a label
-DELETE {{baseUrl}}/api/labels/LABEL_ID_HERE
+POST {{baseUrl}}/api/labels?name=Important
 Authorization: {{authToken}}
 
-### Delete a label (force)
-DELETE {{baseUrl}}/api/labels/LABEL_ID_HERE?forceDelete=true
-Authorization: {{authToken}}
-
-### NOTEBOOKS API
-
-### Get all notebooks
 GET {{baseUrl}}/api/notebooks
 Authorization: {{authToken}}
 
-### Create a new notebook
 POST {{baseUrl}}/api/notebooks
 Authorization: {{authToken}}
 Content-Type: application/json
@@ -55,30 +65,9 @@ Content-Type: application/json
   "title": "Work Notes"
 }
 
-### Update a notebook
-PUT {{baseUrl}}/api/notebooks/1
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "title": "Updated Work Notes"
-}
-
-### Delete a notebook
-DELETE {{baseUrl}}/api/notebooks/1
-Authorization: {{authToken}}
-
-### Get notes from a notebook
-GET {{baseUrl}}/api/notes/notebooks/1/notes
-Authorization: {{authToken}}
-
-### NOTES API
-
-### Get all notes
 GET {{baseUrl}}/api/notes
 Authorization: {{authToken}}
 
-### Create a new note
 POST {{baseUrl}}/api/notes
 Authorization: {{authToken}}
 Content-Type: application/json
@@ -88,55 +77,9 @@ Content-Type: application/json
   "content": "This is a test note content"
 }
 
-### Create a note in a specific notebook
-POST {{baseUrl}}/api/notes/notebooks/1
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "title": "Note in Notebook",
-  "content": "This note belongs to a notebook"
-}
-
-### Update a note
-PUT {{baseUrl}}/api/notes/1
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "title": "Updated Note Title",
-  "content": "Updated content"
-}
-
-### Move note to notebook
-PUT {{baseUrl}}/api/notes/1/notebook
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "notebookId": 1
-}
-
-### Remove note from notebook
-PUT {{baseUrl}}/api/notes/1/notebook
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "notebookId": null
-}
-
-### Delete a note
-DELETE {{baseUrl}}/api/notes/1
-Authorization: {{authToken}}
-
-### BLOC NOTES API
-
-### Get bloc note
 GET {{baseUrl}}/api/bloc-note
 Authorization: {{authToken}}
 
-### Update bloc note
 PUT {{baseUrl}}/api/bloc-note
 Authorization: {{authToken}}
 Content-Type: application/json
@@ -145,65 +88,9 @@ Content-Type: application/json
   "content": "This is my quick note content"
 }
 
-### Delete bloc note
-DELETE {{baseUrl}}/api/bloc-note
-Authorization: {{authToken}}
-
-### COMMENTS API
-
-### Get comments for a note
-GET {{baseUrl}}/api/comments/notes/1
-Authorization: {{authToken}}
-
-### Create a comment
-POST {{baseUrl}}/api/comments/notes/1
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "content": "This is a comment on the note"
-}
-
-### Update a comment
-PUT {{baseUrl}}/api/comments/1
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "content": "Updated comment content"
-}
-
-### Delete a comment
-DELETE {{baseUrl}}/api/comments/1
-Authorization: {{authToken}}
-
-### Get my comments
-GET {{baseUrl}}/api/comments/my-comments
-Authorization: {{authToken}}
-
-### TASKS API
-
-### Get all tasks
 GET {{baseUrl}}/api/tasks
 Authorization: {{authToken}}
 
-### Get pending tasks
-GET {{baseUrl}}/api/tasks/pending
-Authorization: {{authToken}}
-
-### Get completed tasks
-GET {{baseUrl}}/api/tasks/completed
-Authorization: {{authToken}}
-
-### Get overdue tasks
-GET {{baseUrl}}/api/tasks/overdue
-Authorization: {{authToken}}
-
-### Get tasks due in 7 days
-GET {{baseUrl}}/api/tasks/due-in-days?days=7
-Authorization: {{authToken}}
-
-### Create a new task
 POST {{baseUrl}}/api/tasks
 Authorization: {{authToken}}
 Content-Type: application/json
@@ -211,149 +98,10 @@ Content-Type: application/json
 {
   "title": "Complete project documentation",
   "description": "Write comprehensive documentation for the project",
-  "dueDate": "2025-05-25T18:00:00"
+  "dueDate": "2025-06-15T18:00:00"
 }
 
-### Update a task
-PUT {{baseUrl}}/api/tasks/1
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "title": "Updated task title",
-  "description": "Updated description",
-  "dueDate": "2025-05-26T20:00:00",
-  "completed": false
-}
-
-### Toggle task completion
-PUT {{baseUrl}}/api/tasks/1/toggle
-Authorization: {{authToken}}
-
-### Delete a task
-DELETE {{baseUrl}}/api/tasks/1
-Authorization: {{authToken}}
-
-### Get pending task count
-GET {{baseUrl}}/api/tasks/pending/count
-Authorization: {{authToken}}
-
-### DAILY TASKS API
-
-### Get daily tasks for today
-GET {{baseUrl}}/api/daily-tasks
-Authorization: {{authToken}}
-
-### Get daily tasks for specific date
-GET {{baseUrl}}/api/daily-tasks?date=2025-05-20
-Authorization: {{authToken}}
-
-### Create a daily task
-POST {{baseUrl}}/api/daily-tasks
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "title": "Morning exercise",
-  "description": "30 minutes workout",
-  "scheduledDate": "2025-05-20",
-  "priority": 2
-}
-
-### Update a daily task
-PUT {{baseUrl}}/api/daily-tasks/1
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "title": "Updated exercise",
-  "description": "45 minutes workout",
-  "priority": 3,
-  "completed": true
-}
-
-### Delete a daily task
-DELETE {{baseUrl}}/api/daily-tasks/1
-Authorization: {{authToken}}
-
-### Reorder daily tasks
-PUT {{baseUrl}}/api/daily-tasks/reorder
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "orderedIds": [3, 1, 2]
-}
-
-### Confirm end of day
-POST {{baseUrl}}/api/daily-tasks/confirm-end-of-day
-Authorization: {{authToken}}
-
-### Get daily plan
-GET {{baseUrl}}/api/daily-tasks/plan?date=2025-05-20
-Authorization: {{authToken}}
-
-### Get daily history
-GET {{baseUrl}}/api/daily-tasks/history?date=2025-05-19
-Authorization: {{authToken}}
-
-### Get monthly report
-GET {{baseUrl}}/api/daily-tasks/report/monthly?year=2025&month=5
-Authorization: {{authToken}}
-
-### NOTE TASKS API
-
-### Get tasks for a note
-GET {{baseUrl}}/api/note-tasks/notes/1
-Authorization: {{authToken}}
-
-### Get all my note tasks
-GET {{baseUrl}}/api/note-tasks/my-tasks
-Authorization: {{authToken}}
-
-### Get pending note tasks
-GET {{baseUrl}}/api/note-tasks/my-tasks/pending
-Authorization: {{authToken}}
-
-### Create a note task
-POST {{baseUrl}}/api/note-tasks/notes/1
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "title": "Review this section"
-}
-
-### Create a subtask
-POST {{baseUrl}}/api/note-tasks/1/subtasks
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "title": "Check references"
-}
-
-### Update a note task
-PUT {{baseUrl}}/api/note-tasks/1
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "title": "Updated task",
-  "completed": true
-}
-
-### Toggle note task completion
-PUT {{baseUrl}}/api/note-tasks/1/toggle
-Authorization: {{authToken}}
-
-### Delete a note task
-DELETE {{baseUrl}}/api/note-tasks/1
-Authorization: {{authToken}}
-
-### SAVED LINKS API (EXISTING)
-
-### Get all saved links
+### SAVED LINKS API
 GET {{baseUrl}}/api/links
 Authorization: {{authToken}}
 
@@ -367,18 +115,3 @@ Content-Type: application/json
   "title": "Example Website",
   "description": "An example website"
 }
-
-### Update a saved link
-PUT {{baseUrl}}/api/links/1
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "url": "https://updated-example.com",
-  "title": "Updated Example",
-  "description": "Updated description"
-}
-
-### Delete a saved link
-DELETE {{baseUrl}}/api/links/1
-Authorization: {{authToken}}
