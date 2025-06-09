@@ -11,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -32,49 +33,23 @@ public class AuthService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setEnabled(true);
-        user.setEmailVerified(true);
-
-        User savedUser = userRepository.save(user);
-
-        String token = jwtService.generateToken(savedUser);
-        String refreshToken = jwtService.generateRefreshToken(savedUser);
-
-        UserDto userDto = new UserDto();
-        userDto.setId(savedUser.getId());
-        userDto.setEmail(savedUser.getEmail());
-        userDto.setFirstName(savedUser.getFirstName());
-        userDto.setLastName(savedUser.getLastName());
-
-        return new AuthResponse(token, refreshToken, userDto);
-    }
-
-    public AuthResponse signup(SignUpRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Un utilisateur avec cet email existe déjà");
-        }
-
-        User user = new User();
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setEnabled(true);
         user.setEmailVerified(true); // Pour simplifier, on considère l'email vérifié
 
-        // Pour la vérification d'email (optionnel)
-        // user.setEmailVerified(false);
-        // user.setEmailVerificationToken(UUID.randomUUID().toString());
-        // user.setEmailVerificationExpiry(LocalDateTime.now().plusHours(1));
-
         User savedUser = userRepository.save(user);
 
         String token = jwtService.generateToken(savedUser);
         String refreshToken = jwtService.generateRefreshToken(savedUser);
 
-        UserDto userDto = new UserDto();
-        userDto.setEmail(savedUser.getEmail());
-        userDto.setFirstName(savedUser.getFirstName());
-        userDto.setLastName(savedUser.getLastName());
+        UserDto userDto = UserDto.builder()
+                .id(savedUser.getId())
+                .email(savedUser.getEmail())
+                .firstName(savedUser.getFirstName())
+                .lastName(savedUser.getLastName())
+                .enabled(savedUser.getEnabled())
+                .emailVerified(savedUser.getEmailVerified())
+                .createdAt(savedUser.getCreatedAt())
+                .updatedAt(savedUser.getUpdatedAt())
+                .build();
 
         return new AuthResponse(token, refreshToken, userDto);
     }
@@ -88,49 +63,81 @@ public class AuthService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        if (!user.getEnabled()) {
+            throw new RuntimeException("Compte désactivé");
+        }
+
         String token = jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
 
-        UserDto userDto = new UserDto();
-        userDto.setEmail(user.getEmail());
-        userDto.setFirstName(user.getFirstName());
-        userDto.setLastName(user.getLastName());
+        UserDto userDto = UserDto.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .enabled(user.getEnabled())
+                .emailVerified(user.getEmailVerified())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .build();
 
         return new AuthResponse(token, refreshToken, userDto);
     }
 
     public AuthResponse refreshToken(RefreshTokenRequest request) {
-        String email = jwtService.extractUsername(request.getRefreshToken());
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        try {
+            String email = jwtService.extractUsername(request.getRefreshToken());
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
 
-        String token = jwtService.generateToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
+            if (!user.getEnabled()) {
+                throw new RuntimeException("Compte désactivé");
+            }
 
-        UserDto userDto = new UserDto();
-        userDto.setEmail(user.getEmail());
-        userDto.setFirstName(user.getFirstName());
-        userDto.setLastName(user.getLastName());
+            String token = jwtService.generateToken(user);
+            String refreshToken = jwtService.generateRefreshToken(user);
 
-        return new AuthResponse(token, refreshToken, userDto);
+            UserDto userDto = UserDto.builder()
+                    .id(user.getId())
+                    .email(user.getEmail())
+                    .firstName(user.getFirstName())
+                    .lastName(user.getLastName())
+                    .enabled(user.getEnabled())
+                    .emailVerified(user.getEmailVerified())
+                    .createdAt(user.getCreatedAt())
+                    .updatedAt(user.getUpdatedAt())
+                    .build();
+
+            return new AuthResponse(token, refreshToken, userDto);
+        } catch (Exception e) {
+            throw new RuntimeException("Refresh token invalide");
+        }
     }
 
     public void logout(String token) {
-        // Implémenter la blacklist des tokens si nécessaire
+        // TODO: Implémenter une blacklist des tokens si nécessaire
+
         // Pour l'instant, on fait juste expirer côté client
     }
 
     public void verifyEmail(String token) {
         User user = userRepository.findByEmailVerificationToken(token)
-                .orElseThrow(() -> new RuntimeException("Invalid verification token"));
+                .orElseThrow(() -> new RuntimeException("Token de vérification invalide"));
 
         if (user.getEmailVerificationExpiry().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("Verification token expired");
+            throw new RuntimeException("Token de vérification expiré");
         }
 
         user.setEmailVerified(true);
         user.setEmailVerificationToken(null);
         user.setEmailVerificationExpiry(null);
+        userRepository.save(user);
+    }
+
+    // Méthode utilitaire pour générer un token de vérification d'email
+    public void generateEmailVerificationToken(User user) {
+        user.setEmailVerificationToken(UUID.randomUUID().toString());
+        user.setEmailVerificationExpiry(LocalDateTime.now().plusHours(24));
         userRepository.save(user);
     }
 }
