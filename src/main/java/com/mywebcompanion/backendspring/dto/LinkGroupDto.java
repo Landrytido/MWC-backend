@@ -13,9 +13,7 @@ public class LinkGroupDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // Liens sauvegardés dans ce groupe
     private List<SavedLinkGroupDto> savedLinks;
 
-    // Statistiques
     private Integer linkCount;
 }

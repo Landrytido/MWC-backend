@@ -11,6 +11,5 @@ public class LabelDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // Optionnel : nombre de notes associées
     private Long noteCount;
 }

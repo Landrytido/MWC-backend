@@ -24,6 +24,15 @@ public class SavedLinkController {
         return ResponseEntity.ok(links);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<SavedLinkDto> getLinkById(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id) {
+        String email = userDetails.getUsername();
+        SavedLinkDto link = savedLinkService.getLinkById(email, id);
+        return ResponseEntity.ok(link);
+    }
+
     @PostMapping
     public ResponseEntity<SavedLinkDto> createLink(
             @AuthenticationPrincipal UserDetails userDetails,
