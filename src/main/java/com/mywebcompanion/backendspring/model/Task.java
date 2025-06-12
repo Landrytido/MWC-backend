@@ -1,3 +1,4 @@
+// src/main/java/com/mywebcompanion/backendspring/model/Task.java (Version mise à jour)
 package com.mywebcompanion.backendspring.model;
 
 import jakarta.persistence.*;
@@ -5,6 +6,7 @@ import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -23,16 +25,36 @@ public class Task {
     private String description;
 
     @Column
-    private LocalDateTime dueDate;
+    private LocalDateTime dueDate; // Échéance flexible (optionnelle)
+
+    @Column
+    private LocalDate scheduledDate; // Planification quotidienne (aujourd'hui/demain)
+
+    @Column(nullable = false)
+    private Integer priority = 2; // 1=basse, 2=moyenne, 3=haute
 
     @Column(nullable = false)
     private Boolean completed = false;
+
+    @Column
+    private LocalDateTime completedAt; // Quand la tâche a été complétée
+
+    // Champs pour le système de planification quotidienne
+    @Column(nullable = false)
+    private Boolean carriedOver = false; // Si la tâche a été reportée
+
+    @Column
+    private LocalDate originalDate; // Date originale si reportée
+
+    @Column(nullable = false)
+    private Integer orderIndex = 0; // Ordre d'affichage dans la journée
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     // Champs pour les notifications (optionnels pour l'instant)
+    @Column(nullable = false)
     private Boolean notificationSent = false;
 
     @Column(unique = true)
@@ -43,4 +65,65 @@ public class Task {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    // Méthodes utilitaires
+    public void markAsCompleted() {
+        this.completed = true;
+        this.completedAt = LocalDateTime.now();
+    }
+
+    public void markAsIncomplete() {
+        this.completed = false;
+        this.completedAt = null;
+    }
+
+    public void carryOverTo(LocalDate newDate) {
+        this.originalDate = this.originalDate != null ? this.originalDate : this.scheduledDate;
+        this.scheduledDate = newDate;
+        this.carriedOver = true;
+    }
+
+    // Calculer le statut de la tâche
+    public String getStatus() {
+        if (this.completed) {
+            return "completed";
+        }
+
+        LocalDate today = LocalDate.now();
+        LocalDate tomorrow = today.plusDays(1);
+
+        if (this.scheduledDate != null) {
+            if (this.scheduledDate.equals(today)) {
+                return "today";
+            }
+            if (this.scheduledDate.equals(tomorrow)) {
+                return "tomorrow";
+            }
+        }
+
+        if (this.dueDate != null && this.dueDate.isBefore(LocalDateTime.now())) {
+            return "overdue";
+        }
+
+        return "upcoming";
+    }
+
+    // Vérifier si la tâche est en retard
+    public boolean isOverdue() {
+        if (this.completed) {
+            return false;
+        }
+        return this.dueDate != null && this.dueDate.isBefore(LocalDateTime.now());
+    }
+
+    // Vérifier si la tâche est planifiée pour aujourd'hui
+    public boolean isScheduledForToday() {
+        return this.scheduledDate != null && this.scheduledDate.equals(LocalDate.now());
+    }
+
+    // Vérifier si la tâche est planifiée pour demain
+    public boolean isScheduledForTomorrow() {
+        LocalDate tomorrow = LocalDate.now().plusDays(1);
+        return this.scheduledDate != null && this.scheduledDate.equals(tomorrow);
+    }
 }
