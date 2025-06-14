@@ -1,6 +1,6 @@
 
 @baseUrl = http://localhost:8080
-@authToken = eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsInN1YiI6InRlc3RAZXhhbXBsZS5jb20iLCJpYXQiOjE3NDk0MzQ0NzcsImV4cCI6MTc0OTUyMDg3N30.LjSfrfz-tqT89XZLwwvcuQ0IQ0gGfbFdF9yqvGrbTUc
+@authToken = eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsInN1YiI6InRlc3RAZXhhbXBsZS5jb20iLCJpYXQiOjE3NDk4NzM3NDcsImV4cCI6MTc0OTk2MDE0N30.PI0FrZ9By2XgYEltCRH_jVYx6SS99xncFJbaGMctVtQ
 
 ### HEALTH CHECK
 GET {{baseUrl}}/api/health
@@ -77,9 +77,11 @@ Content-Type: application/json
   "content": "This is a test note content"
 }
 
+### BLOC-NOTE API
 GET {{baseUrl}}/api/bloc-note
 Authorization: {{authToken}}
 
+## Create or update a quick note
 PUT {{baseUrl}}/api/bloc-note
 Authorization: {{authToken}}
 Content-Type: application/json

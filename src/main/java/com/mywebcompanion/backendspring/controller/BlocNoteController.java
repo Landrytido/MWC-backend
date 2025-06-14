@@ -35,6 +35,6 @@ public class BlocNoteController {
     public ResponseEntity<Void> deleteBlocNote(@AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails.getUsername();
         blocNoteService.deleteBlocNote(email);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 }
