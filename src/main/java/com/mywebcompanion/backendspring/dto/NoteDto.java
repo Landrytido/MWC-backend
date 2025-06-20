@@ -3,6 +3,7 @@ package com.mywebcompanion.backendspring.dto;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 public class NoteDto {
@@ -12,8 +13,8 @@ public class NoteDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Long commentCount;
-    private Long taskCount;
-    private Long completedTaskCount;
     private Long notebookId;
     private String notebookTitle;
+    private List<LabelDto> labels;
+
 }

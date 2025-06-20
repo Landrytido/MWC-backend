@@ -25,11 +25,37 @@ public class NoteController {
         return ResponseEntity.ok(notes);
     }
 
+    @PostMapping("/{id}/labels/{labelId}")
+    public ResponseEntity<NoteDto> addLabelToNote(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id,
+            @PathVariable String labelId) {
+        String email = userDetails.getUsername();
+        NoteDto updatedNote = noteService.addLabelToNote(email, id, labelId);
+        return ResponseEntity.ok(updatedNote);
+    }
+
+    @DeleteMapping("/{id}/labels/{labelId}")
+    public ResponseEntity<NoteDto> removeLabelFromNote(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id,
+            @PathVariable String labelId) {
+        String email = userDetails.getUsername();
+        NoteDto updatedNote = noteService.removeLabelFromNote(email, id, labelId);
+        return ResponseEntity.ok(updatedNote);
+    }
+
     @PostMapping
     public ResponseEntity<NoteDto> createNote(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestBody NoteDto noteDto) {
         String email = userDetails.getUsername();
+
+        if (noteDto.getNotebookId() != null) {
+            NoteDto createdNote = noteService.createNoteInNotebook(email, noteDto, noteDto.getNotebookId());
+            return ResponseEntity.ok(createdNote);
+        }
+
         NoteDto createdNote = noteService.createNote(email, noteDto);
         return ResponseEntity.ok(createdNote);
     }

@@ -1,10 +1,13 @@
 package com.mywebcompanion.backendspring.service;
 
+import com.mywebcompanion.backendspring.dto.LabelDto;
 import com.mywebcompanion.backendspring.dto.NoteDto;
+import com.mywebcompanion.backendspring.model.Label;
 import com.mywebcompanion.backendspring.model.Note;
 import com.mywebcompanion.backendspring.model.Notebook;
 import com.mywebcompanion.backendspring.model.User;
 import com.mywebcompanion.backendspring.repository.CommentRepository;
+import com.mywebcompanion.backendspring.repository.LabelRepository;
 import com.mywebcompanion.backendspring.repository.NoteRepository;
 import com.mywebcompanion.backendspring.repository.NotebookRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,7 @@ public class NoteService {
     private final UserService userService;
     private final NotebookRepository notebookRepository;
     private final CommentRepository commentRepository;
+    private final LabelRepository labelRepository;
 
     public List<NoteDto> getNotesByUserEmail(String email) {
         User user = userService.findByEmail(email);
@@ -33,6 +37,7 @@ public class NoteService {
             return List.of();
         }
 
+        // Optimisation: Récupérer les compteurs de commentaires en une seule requête
         List<Long> noteIds = notes.stream().map(Note::getId).collect(Collectors.toList());
         Map<Long, Long> commentCounts = commentRepository.findCommentCountsByNoteIds(noteIds);
 
@@ -85,6 +90,7 @@ public class NoteService {
         note.setContent(noteDto.getContent());
         note.setUser(user);
 
+        // Assigner au carnet si spécifié
         if (notebookId != null) {
             Notebook notebook = notebookRepository.findByIdAndUserId(notebookId, user.getId())
                     .orElseThrow(() -> new RuntimeException("Carnet non trouvé"));
@@ -101,6 +107,7 @@ public class NoteService {
         Note note = noteRepository.findByIdAndUserId(noteId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Note non trouvée ou accès non autorisé"));
 
+        // Si notebookId est null, on retire la note du carnet
         if (notebookId == null) {
             note.setNotebook(null);
         } else {
@@ -116,6 +123,7 @@ public class NoteService {
     public List<NoteDto> getNotesByNotebookId(String email, Long notebookId) {
         User user = userService.findByEmail(email);
 
+        // Vérifier que le carnet appartient à l'utilisateur
         notebookRepository.findByIdAndUserId(notebookId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Carnet non trouvé"));
 
@@ -125,6 +133,7 @@ public class NoteService {
             return List.of();
         }
 
+        // Optimisation: Récupérer les compteurs de commentaires en une seule requête
         List<Long> noteIds = notes.stream().map(Note::getId).collect(Collectors.toList());
         Map<Long, Long> commentCounts = commentRepository.findCommentCountsByNoteIds(noteIds);
 
@@ -150,6 +159,34 @@ public class NoteService {
                 .collect(Collectors.toList());
     }
 
+    // NOUVEAUX ENDPOINTS POUR LES LABELS
+    @Transactional
+    public NoteDto addLabelToNote(String email, Long noteId, String labelId) {
+        User user = userService.findByEmail(email);
+
+        Note note = noteRepository.findByIdAndUserId(noteId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Note non trouvée"));
+
+        Label label = labelRepository.findByIdAndUserId(labelId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Label non trouvé"));
+
+        note.getLabels().add(label);
+        Note savedNote = noteRepository.save(note);
+        return convertToDto(savedNote);
+    }
+
+    @Transactional
+    public NoteDto removeLabelFromNote(String email, Long noteId, String labelId) {
+        User user = userService.findByEmail(email);
+
+        Note note = noteRepository.findByIdAndUserId(noteId, user.getId())
+                .orElseThrow(() -> new RuntimeException("Note non trouvée"));
+
+        note.getLabels().removeIf(label -> label.getId().equals(labelId));
+        Note savedNote = noteRepository.save(note);
+        return convertToDto(savedNote);
+    }
+
     private NoteDto convertToDto(Note note, Map<Long, Long> commentCounts) {
         NoteDto dto = new NoteDto();
         dto.setId(note.getId());
@@ -163,10 +200,11 @@ public class NoteService {
             dto.setNotebookTitle(note.getNotebook().getTitle());
         }
 
-        dto.setCommentCount(commentCounts.getOrDefault(note.getId(), 0L));
+        dto.setLabels(note.getLabels().stream()
+                .map(this::convertLabelToDto)
+                .collect(Collectors.toList()));
 
-        dto.setTaskCount(0L);
-        dto.setCompletedTaskCount(0L);
+        dto.setCommentCount(commentCounts.getOrDefault(note.getId(), 0L));
 
         return dto;
     }
@@ -184,11 +222,21 @@ public class NoteService {
             dto.setNotebookTitle(note.getNotebook().getTitle());
         }
 
+        dto.setLabels(note.getLabels().stream()
+                .map(this::convertLabelToDto)
+                .collect(Collectors.toList()));
+
         dto.setCommentCount(commentRepository.countByNoteId(note.getId()));
 
-        dto.setTaskCount(0L);
-        dto.setCompletedTaskCount(0L);
+        return dto;
+    }
 
+    private LabelDto convertLabelToDto(Label label) {
+        LabelDto dto = new LabelDto();
+        dto.setId(label.getId());
+        dto.setName(label.getName());
+        dto.setCreatedAt(label.getCreatedAt());
+        dto.setUpdatedAt(label.getUpdatedAt());
         return dto;
     }
 }
