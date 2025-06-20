@@ -38,25 +38,6 @@ public class UserController {
         }
     }
 
-    @GetMapping("/me")
-    public ResponseEntity<UserDto> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
-        String email = userDetails.getUsername();
-        User user = userService.findByEmail(email);
-
-        UserDto userDto = UserDto.builder()
-                .id(user.getId())
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .enabled(user.getEnabled())
-                .emailVerified(user.getEmailVerified())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
-                .build();
-
-        return ResponseEntity.ok(userDto);
-    }
-
     @PutMapping("/profile")
     public ResponseEntity<UserDto> updateProfile(
             @AuthenticationPrincipal UserDetails userDetails,

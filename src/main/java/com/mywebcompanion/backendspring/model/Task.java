@@ -1,4 +1,3 @@
-// src/main/java/com/mywebcompanion/backendspring/model/Task.java (Version mise à jour)
 package com.mywebcompanion.backendspring.model;
 
 import jakarta.persistence.*;
@@ -83,7 +82,6 @@ public class Task {
         this.carriedOver = true;
     }
 
-    // Calculer le statut de la tâche
     public String getStatus() {
         if (this.completed) {
             return "completed";

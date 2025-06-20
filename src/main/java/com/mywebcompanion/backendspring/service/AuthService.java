@@ -33,7 +33,7 @@ public class AuthService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setEnabled(true);
-        user.setEmailVerified(true); // Pour simplifier, on considère l'email vérifié
+        user.setEmailVerified(true);
 
         User savedUser = userRepository.save(user);
 
