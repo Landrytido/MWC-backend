@@ -234,28 +234,6 @@ public class TaskService {
                 .collect(Collectors.toList());
     }
 
-    // Nouvelle méthode : Réorganiser les tâches
-    public List<TaskDto> reorderTasks(String email, ReorderTasksRequest request) {
-        User user = userService.findByEmail(email);
-        List<TaskDto> updatedTasks = new ArrayList<>();
-
-        for (int i = 0; i < request.getTaskIds().size(); i++) {
-            Long taskId = request.getTaskIds().get(i);
-            Task task = taskRepository.findByIdAndUserId(taskId, user.getId())
-                    .orElseThrow(() -> new RuntimeException("Tâche non trouvée: " + taskId));
-
-            task.setOrderIndex(i);
-            if (request.getScheduledDate() != null) {
-                task.setScheduledDate(request.getScheduledDate());
-            }
-
-            Task saved = taskRepository.save(task);
-            updatedTasks.add(convertToDto(saved));
-        }
-
-        return updatedTasks;
-    }
-
     // Nouvelle méthode : Statistiques mensuelles
     public TaskStatsDto getMonthlyStats(String email, int year, int month) {
         User user = userService.findByEmail(email);

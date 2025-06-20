@@ -162,15 +162,6 @@ public class TaskController {
         return ResponseEntity.ok(carriedOverTasks);
     }
 
-    @PostMapping("/reorder")
-    public ResponseEntity<List<TaskDto>> reorderTasks(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestBody ReorderTasksRequest request) {
-        String email = userDetails.getUsername();
-        List<TaskDto> reorderedTasks = taskService.reorderTasks(email, request);
-        return ResponseEntity.ok(reorderedTasks);
-    }
-
     @GetMapping("/stats/monthly")
     public ResponseEntity<TaskStatsDto> getMonthlyStats(
             @AuthenticationPrincipal UserDetails userDetails,

@@ -16,7 +16,6 @@ import java.util.List;
 @Table(name = "users")
 @Data
 @ToString(exclude = { "notes", "links", "notebooks", "blocNote", "comments", "tasks",
-        "dailyPlans", "dailyTasks", "dailyTaskHistory", "noteTasks",
         "linkGroups", "files", "password" })
 public class User {
 
@@ -71,26 +70,6 @@ public class User {
     @JsonIgnore
     @BatchSize(size = 10)
     private List<Task> tasks = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
-    @BatchSize(size = 10)
-    private List<DailyPlan> dailyPlans = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
-    @BatchSize(size = 10)
-    private List<DailyTask> dailyTasks = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
-    @BatchSize(size = 10)
-    private List<DailyTaskHistory> dailyTaskHistory = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
-    @BatchSize(size = 10)
-    private List<NoteTask> noteTasks = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore
