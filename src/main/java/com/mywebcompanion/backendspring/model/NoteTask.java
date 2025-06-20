@@ -35,7 +35,6 @@ public class NoteTask {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    // Auto-référence pour les sous-tâches
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private NoteTask parent;

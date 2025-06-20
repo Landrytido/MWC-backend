@@ -40,7 +40,6 @@ public class DailyTaskService {
 
         LocalDate scheduledDate = dto.getScheduledDate() != null ? dto.getScheduledDate() : LocalDate.now();
 
-        // Limite de 6 tâches pour le futur (demain et après)
         if (scheduledDate.isAfter(LocalDate.now())) {
             Long count = dailyTaskRepository.countByUserIdAndScheduledDate(user.getId(), scheduledDate);
             if (count >= 6) {
@@ -55,7 +54,6 @@ public class DailyTaskService {
         task.setPriority(dto.getPriority() != null ? dto.getPriority() : 1);
         task.setUser(user);
 
-        // Définir l'ordre (à la fin)
         List<DailyTask> existingTasks = dailyTaskRepository
                 .findByUserIdAndScheduledDateOrderByOrderIndexAsc(user.getId(), scheduledDate);
         task.setOrderIndex(existingTasks.size());
@@ -73,7 +71,6 @@ public class DailyTaskService {
         task.setDescription(dto.getDescription());
         task.setPriority(dto.getPriority());
 
-        // Si on marque comme complétée
         if (dto.getCompleted() != null && !task.getCompleted() && dto.getCompleted()) {
             task.setCompleted(true);
             task.setCompletedAt(LocalDateTime.now());
@@ -107,8 +104,7 @@ public class DailyTaskService {
             dailyTaskRepository.save(task);
         });
 
-        // Retourner les tâches réorganisées
-        LocalDate date = LocalDate.now(); // On assume que c'est pour aujourd'hui
+        LocalDate date = LocalDate.now();
         return getDailyTasks(email, date);
     }
 
@@ -117,28 +113,23 @@ public class DailyTaskService {
         LocalDate today = LocalDate.now();
         LocalDate tomorrow = today.plusDays(1);
 
-        // Archiver toutes les tâches du jour
         List<DailyTask> todayTasks = dailyTaskRepository.findByUserIdAndScheduledDateOrderByOrderIndexAsc(user.getId(),
                 today);
 
         for (DailyTask task : todayTasks) {
-            // Créer l'entrée d'historique
             DailyTaskHistory history = convertToHistory(task);
             dailyTaskHistoryRepository.save(history);
 
-            // Si la tâche n'est pas complétée, la reporter à demain
             if (!task.getCompleted()) {
                 task.setScheduledDate(tomorrow);
                 task.setOriginalDate(task.getOriginalDate() != null ? task.getOriginalDate() : today);
                 task.setCarriedOver(true);
                 dailyTaskRepository.save(task);
             } else {
-                // Supprimer la tâche complétée
                 dailyTaskRepository.delete(task);
             }
         }
 
-        // Marquer le plan du jour comme confirmé
         DailyPlan plan = dailyPlanRepository.findByUserIdAndDate(user.getId(), today)
                 .orElse(createDailyPlan(user, today));
         plan.setConfirmed(true);
@@ -174,7 +165,6 @@ public class DailyTaskService {
             return report;
         }
 
-        // Retourner un rapport vide si aucune donnée
         MonthlyReportDto emptyReport = new MonthlyReportDto();
         emptyReport.setTotalTasks(0);
         emptyReport.setCompletedTasks(0);

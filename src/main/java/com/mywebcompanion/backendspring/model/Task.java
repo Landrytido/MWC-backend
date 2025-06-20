@@ -106,7 +106,6 @@ public class Task {
         return "upcoming";
     }
 
-    // Vérifier si la tâche est en retard
     public boolean isOverdue() {
         if (this.completed) {
             return false;
@@ -114,12 +113,10 @@ public class Task {
         return this.dueDate != null && this.dueDate.isBefore(LocalDateTime.now());
     }
 
-    // Vérifier si la tâche est planifiée pour aujourd'hui
     public boolean isScheduledForToday() {
         return this.scheduledDate != null && this.scheduledDate.equals(LocalDate.now());
     }
 
-    // Vérifier si la tâche est planifiée pour demain
     public boolean isScheduledForTomorrow() {
         LocalDate tomorrow = LocalDate.now().plusDays(1);
         return this.scheduledDate != null && this.scheduledDate.equals(tomorrow);
