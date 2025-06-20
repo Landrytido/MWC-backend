@@ -33,9 +33,11 @@ public class AuthController {
         } catch (UserAlreadyExistsException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("error", "Utilisateur déjà existant", "message", e.getMessage()));
-        } catch (Exception e) {
+        } catch (Exception e) { // 👈 GARDEZ ÇA pour les autres erreurs
+            log.error("Erreur inattendue lors de l'inscription", e); // Optionnel pour debug
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Erreur lors de l'inscription"));
+                    .body(Map.of("error", "Erreur interne du serveur", "message",
+                            "Une erreur inattendue s'est produite"));
         }
     }
 

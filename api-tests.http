@@ -1,7 +1,6 @@
 
 @baseUrl = http://localhost:8080
-@authToken = eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsInN1YiI6InRlc3RAZXhhbXBsZS5jb20iLCJpYXQiOjE3NDk4NzM3NDcsImV4cCI6MTc0OTk2MDE0N30.PI0FrZ9By2XgYEltCRH_jVYx6SS99xncFJbaGMctVtQ
-
+@authToken = eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOjgsImVtYWlsIjoidGVzdDFAZXhhbXBsZS5jb20iLCJzdWIiOiJ0ZXN0MUBleGFtcGxlLmNvbSIsImlhdCI6MTc1MDQxNzY1MCwiZXhwIjoxNzUwNTA0MDUwfQ.Dd9vVxXDeHEjzHuV2G5syxfDApN6Ue9rOiFhjk7I0x0
 ### HEALTH CHECK
 GET {{baseUrl}}/api/health
 
@@ -14,7 +13,7 @@ POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
 {
-  "email": "test@example.com",
+  "email": "test1@example.com",
   "password": "motdepasse123",
   "firstName": "John",
   "lastName": "Doe"
@@ -25,7 +24,7 @@ POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "test@example.com",
+  "email": "test1@example.com",
   "password": "motdepasse123"
 }
 
@@ -77,19 +76,24 @@ Content-Type: application/json
   "content": "This is a test note content"
 }
 
-### BLOC-NOTE API
+### 1. Récupérer le bloc-note
 GET {{baseUrl}}/api/bloc-note
-Authorization: {{authToken}}
+Authorization: Bearer {{authToken}}
 
-## Create or update a quick note
+### 2. Créer/Mettre à jour le bloc-note
 PUT {{baseUrl}}/api/bloc-note
-Authorization: {{authToken}}
+Authorization: Bearer {{authToken}}
 Content-Type: application/json
 
 {
-  "content": "This is my quick note content"
+  "content": "Mon contenu de test"
 }
 
+### 3. Supprimer le bloc-note
+DELETE {{baseUrl}}/api/bloc-note
+Authorization: Bearer {{authToken}}
+
+### TASKS API
 GET {{baseUrl}}/api/tasks
 Authorization: {{authToken}}
 

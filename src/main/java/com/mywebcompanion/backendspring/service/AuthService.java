@@ -1,6 +1,7 @@
 package com.mywebcompanion.backendspring.service;
 
 import com.mywebcompanion.backendspring.dto.*;
+import com.mywebcompanion.backendspring.exception.UserAlreadyExistsException;
 import com.mywebcompanion.backendspring.model.User;
 import com.mywebcompanion.backendspring.repository.UserRepository;
 import com.mywebcompanion.backendspring.security.JwtService;
@@ -24,7 +25,7 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Un utilisateur avec cet email existe déjà");
+            throw new UserAlreadyExistsException("Un utilisateur avec cet email existe déjà");
         }
 
         User user = new User();

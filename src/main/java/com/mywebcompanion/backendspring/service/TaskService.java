@@ -199,29 +199,24 @@ public class TaskService {
         return taskRepository.countByUserIdAndCompletedFalse(user.getId());
     }
 
-    // Nouvelle méthode : Terminer la journée
     public List<TaskDto> endDay(String email, EndDayRequest request) {
         User user = userService.findByEmail(email);
         LocalDate dateToEnd = request.getDate() != null ? request.getDate() : LocalDate.now();
         LocalDate tomorrow = dateToEnd.plusDays(1);
 
-        // Récupérer toutes les tâches non terminées du jour
         List<Task> pendingTasks = taskRepository.findPendingTasksByUserIdAndScheduledDate(user.getId(), dateToEnd);
 
         List<Task> carriedOverTasks = new ArrayList<>();
 
         for (Task task : pendingTasks) {
-            // Si des IDs spécifiques sont fournis, ne reporter que ceux-là
             if (request.getTaskIdsToCarryOver() != null &&
                     !request.getTaskIdsToCarryOver().isEmpty() &&
                     !request.getTaskIdsToCarryOver().contains(task.getId())) {
                 continue;
             }
 
-            // Reporter la tâche à demain
             task.carryOverTo(tomorrow);
 
-            // Réorganiser selon la priorité existante des tâches de demain
             Integer nextOrder = taskRepository.findNextOrderIndex(user.getId(), tomorrow);
             task.setOrderIndex(nextOrder != null ? nextOrder : 0);
 
@@ -234,7 +229,6 @@ public class TaskService {
                 .collect(Collectors.toList());
     }
 
-    // Nouvelle méthode : Statistiques mensuelles
     public TaskStatsDto getMonthlyStats(String email, int year, int month) {
         User user = userService.findByEmail(email);
 
@@ -242,7 +236,6 @@ public class TaskService {
         stats.setMonth(month);
         stats.setYear(year);
 
-        // Statistiques par priorité
         List<Object[]> priorityStats = taskRepository.findMonthlyStatsByPriority(user.getId(), year, month);
         Map<Integer, TaskStatsDto.PriorityStats> priorityStatsMap = new HashMap<>();
 
@@ -271,7 +264,6 @@ public class TaskService {
         stats.setCompletionPercentage(totalTasks > 0 ? (completedTasks * 100.0 / totalTasks) : 0.0);
         stats.setTasksByPriority(priorityStatsMap);
 
-        // Statistiques quotidiennes
         List<Object[]> dailyStats = taskRepository.findDailyStatsForMonth(user.getId(), year, month);
         Map<LocalDate, TaskStatsDto.DailyStats> dailyStatsMap = new HashMap<>();
 
@@ -293,7 +285,6 @@ public class TaskService {
         return stats;
     }
 
-    // Nouvelle méthode : Résumé des tâches utilisateur
     public Map<String, Object> getUserTaskSummary(String email) {
         User user = userService.findByEmail(email);
         Object[] summary = taskRepository.findUserTaskSummary(user.getId());
@@ -334,7 +325,6 @@ public class TaskService {
                 .collect(Collectors.toList());
     }
 
-    // Méthode de conversion mise à jour
     private TaskDto convertToDto(Task task) {
         TaskDto dto = new TaskDto();
         dto.setId(task.getId());
@@ -348,7 +338,6 @@ public class TaskService {
         dto.setCreatedAt(task.getCreatedAt());
         dto.setUpdatedAt(task.getUpdatedAt());
 
-        // Nouveaux champs
         dto.setCarriedOver(task.getCarriedOver());
         dto.setOriginalDate(task.getOriginalDate());
         dto.setOrderIndex(task.getOrderIndex());

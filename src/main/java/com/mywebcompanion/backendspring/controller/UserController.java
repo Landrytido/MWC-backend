@@ -55,10 +55,17 @@ public class UserController {
 
         User updatedUser = userService.updateUser(user);
 
-        UserDto responseDto = new UserDto();
-        responseDto.setEmail(updatedUser.getEmail());
-        responseDto.setFirstName(updatedUser.getFirstName());
-        responseDto.setLastName(updatedUser.getLastName());
+        // Utiliser le builder pour un DTO complet
+        UserDto responseDto = UserDto.builder()
+                .id(updatedUser.getId())
+                .email(updatedUser.getEmail())
+                .firstName(updatedUser.getFirstName())
+                .lastName(updatedUser.getLastName())
+                .enabled(updatedUser.getEnabled())
+                .emailVerified(updatedUser.getEmailVerified())
+                .createdAt(updatedUser.getCreatedAt())
+                .updatedAt(updatedUser.getUpdatedAt())
+                .build();
 
         return ResponseEntity.ok(responseDto);
     }

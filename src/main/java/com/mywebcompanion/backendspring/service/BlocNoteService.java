@@ -19,7 +19,6 @@ public class BlocNoteService {
     private final UserService userService;
 
     public BlocNoteDto getBlocNoteByUserEmail(String email) {
-        System.out.println("🔍 getBlocNoteByUserEmail - email: " + email);
 
         // Récupérer l'utilisateur par email
         User user = userService.findByEmail(email);
