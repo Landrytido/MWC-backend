@@ -2,6 +2,8 @@ package com.mywebcompanion.backendspring.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -14,12 +16,15 @@ import java.util.Set;
         @UniqueConstraint(columnNames = { "name", "user_id" })
 })
 @Data
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Label {
 
     @Id
+    @EqualsAndHashCode.Include
     private String id;
 
     @Column(nullable = false)
+    @EqualsAndHashCode.Include
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -32,7 +37,6 @@ public class Label {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    // Relation Many-to-Many avec Note
     @ManyToMany(mappedBy = "labels")
     private Set<Note> notes = new HashSet<>();
 

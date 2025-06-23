@@ -16,5 +16,6 @@ public class NoteDto {
     private Long notebookId;
     private String notebookTitle;
     private List<LabelDto> labels;
+    private List<String> labelIds;
 
 }

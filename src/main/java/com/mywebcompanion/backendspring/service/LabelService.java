@@ -4,8 +4,10 @@ import com.mywebcompanion.backendspring.dto.LabelDto;
 import com.mywebcompanion.backendspring.model.Label;
 import com.mywebcompanion.backendspring.model.User;
 import com.mywebcompanion.backendspring.repository.LabelRepository;
+import com.mywebcompanion.backendspring.exception.ResourceNotFoundException;
+import com.mywebcompanion.backendspring.exception.DuplicateResourceException;
+import com.mywebcompanion.backendspring.exception.ValidationException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,40 +31,52 @@ public class LabelService {
     }
 
     public LabelDto createLabel(String email, String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new ValidationException("Le nom du label ne peut pas être vide");
+        }
+
+        if (name.trim().length() > 50) {
+            throw new ValidationException("Le nom du label ne peut pas dépasser 50 caractères");
+        }
+
+        String cleanName = name.trim();
         User user = userService.findByEmail(email);
 
-        // Vérifier si le label existe déjà
-        if (labelRepository.findByNameAndUserId(name, user.getId()).isPresent()) {
-            throw new RuntimeException("Un label avec ce nom existe déjà");
+        if (labelRepository.findByNameAndUserId(cleanName, user.getId()).isPresent()) {
+            throw new DuplicateResourceException("Label", "name", cleanName);
         }
 
         Label label = new Label();
-        label.setName(name);
+        label.setName(cleanName);
         label.setUser(user);
 
-        try {
-            Label savedLabel = labelRepository.save(label);
-            return convertToDto(savedLabel);
-        } catch (DataIntegrityViolationException e) {
-            throw new RuntimeException("Un label avec ce nom existe déjà");
-        }
+        Label savedLabel = labelRepository.save(label);
+        return convertToDto(savedLabel);
     }
 
     public LabelDto updateLabel(String email, String labelId, String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new ValidationException("Le nom du label ne peut pas être vide");
+        }
+
+        if (name.trim().length() > 50) {
+            throw new ValidationException("Le nom du label ne peut pas dépasser 50 caractères");
+        }
+
+        String cleanName = name.trim();
         User user = userService.findByEmail(email);
 
         Label label = labelRepository.findByIdAndUserId(labelId, user.getId())
-                .orElseThrow(() -> new RuntimeException("Label non trouvé ou accès non autorisé"));
+                .orElseThrow(() -> new ResourceNotFoundException("Label", "id", labelId));
 
-        // Vérifier si un autre label avec ce nom existe
-        labelRepository.findByNameAndUserId(name, user.getId())
+        labelRepository.findByNameAndUserId(cleanName, user.getId())
                 .ifPresent(existingLabel -> {
                     if (!existingLabel.getId().equals(labelId)) {
-                        throw new RuntimeException("Un label avec ce nom existe déjà");
+                        throw new DuplicateResourceException("Label", "name", cleanName);
                     }
                 });
 
-        label.setName(name);
+        label.setName(cleanName);
         Label updatedLabel = labelRepository.save(label);
         return convertToDto(updatedLabel);
     }
@@ -71,12 +85,11 @@ public class LabelService {
         User user = userService.findByEmail(email);
 
         Label label = labelRepository.findByIdAndUserId(labelId, user.getId())
-                .orElseThrow(() -> new RuntimeException("Label non trouvé ou accès non autorisé"));
+                .orElseThrow(() -> new ResourceNotFoundException("Label", "id", labelId));
 
-        // Vérifier s'il y a des notes associées
         Long noteCount = labelRepository.countNotesByLabelIdAndUserId(labelId, user.getId());
         if (noteCount > 0 && !forceDelete) {
-            throw new RuntimeException(
+            throw new ValidationException(
                     "Ce label est utilisé par " + noteCount + " note(s). Utilisez forceDelete=true pour le supprimer.");
         }
 
@@ -85,10 +98,8 @@ public class LabelService {
 
     public LabelDto getLabelById(String email, String labelId) {
         User user = userService.findByEmail(email);
-
         Label label = labelRepository.findByIdAndUserId(labelId, user.getId())
-                .orElseThrow(() -> new RuntimeException("Label non trouvé ou accès non autorisé"));
-
+                .orElseThrow(() -> new ResourceNotFoundException("Label", "id", labelId));
         return convertToDto(label);
     }
 
@@ -106,10 +117,7 @@ public class LabelService {
         dto.setName(label.getName());
         dto.setCreatedAt(label.getCreatedAt());
         dto.setUpdatedAt(label.getUpdatedAt());
-
-        // CORRECTION: labelId est maintenant un String (UUID)
         dto.setNoteCount(labelRepository.countNotesByLabelIdAndUserId(label.getId(), label.getUser().getId()));
-
         return dto;
     }
 }

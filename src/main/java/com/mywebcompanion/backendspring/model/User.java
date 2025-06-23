@@ -3,6 +3,7 @@ package com.mywebcompanion.backendspring.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
@@ -15,15 +16,18 @@ import java.util.List;
 @Entity
 @Table(name = "users")
 @Data
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString(exclude = { "notes", "links", "notebooks", "blocNote", "comments", "tasks",
         "linkGroups", "files", "password" })
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(unique = true, nullable = false)
+    @EqualsAndHashCode.Include
     private String email;
 
     @Column(nullable = false)

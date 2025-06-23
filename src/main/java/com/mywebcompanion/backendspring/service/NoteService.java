@@ -2,6 +2,7 @@ package com.mywebcompanion.backendspring.service;
 
 import com.mywebcompanion.backendspring.dto.LabelDto;
 import com.mywebcompanion.backendspring.dto.NoteDto;
+import com.mywebcompanion.backendspring.exception.ResourceNotFoundException;
 import com.mywebcompanion.backendspring.model.Label;
 import com.mywebcompanion.backendspring.model.Note;
 import com.mywebcompanion.backendspring.model.Notebook;
@@ -13,6 +14,8 @@ import com.mywebcompanion.backendspring.repository.NotebookRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.HashSet;
+import java.util.Set;
 
 import java.util.List;
 import java.util.Map;
@@ -37,7 +40,6 @@ public class NoteService {
             return List.of();
         }
 
-        // Optimisation: Récupérer les compteurs de commentaires en une seule requête
         List<Long> noteIds = notes.stream().map(Note::getId).collect(Collectors.toList());
         Map<Long, Long> commentCounts = commentRepository.findCommentCountsByNoteIds(noteIds);
 
@@ -54,7 +56,15 @@ public class NoteService {
         note.setTitle(noteDto.getTitle());
         note.setContent(noteDto.getContent());
         note.setUser(user);
-
+        if (noteDto.getLabelIds() != null && !noteDto.getLabelIds().isEmpty()) {
+            Set<Label> labels = new HashSet<>();
+            for (String labelId : noteDto.getLabelIds()) {
+                Label label = labelRepository.findByIdAndUserId(labelId, user.getId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Label", "id", labelId));
+                labels.add(label);
+            }
+            note.setLabels(labels);
+        }
         Note savedNote = noteRepository.save(note);
         return convertToDto(savedNote);
     }
@@ -90,13 +100,20 @@ public class NoteService {
         note.setContent(noteDto.getContent());
         note.setUser(user);
 
-        // Assigner au carnet si spécifié
         if (notebookId != null) {
             Notebook notebook = notebookRepository.findByIdAndUserId(notebookId, user.getId())
                     .orElseThrow(() -> new RuntimeException("Carnet non trouvé"));
             note.setNotebook(notebook);
         }
-
+        if (noteDto.getLabelIds() != null && !noteDto.getLabelIds().isEmpty()) {
+            Set<Label> labels = new HashSet<>();
+            for (String labelId : noteDto.getLabelIds()) {
+                Label label = labelRepository.findByIdAndUserId(labelId, user.getId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Label", "id", labelId));
+                labels.add(label);
+            }
+            note.setLabels(labels);
+        }
         Note savedNote = noteRepository.save(note);
         return convertToDto(savedNote);
     }
