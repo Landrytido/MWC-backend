@@ -52,6 +52,13 @@ public class Task {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @OneToOne(mappedBy = "relatedTask", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Event calendarEvent;
+
+    public boolean hasCalendarEvent() {
+        return this.calendarEvent != null;
+    }
+
     // Champs pour les notifications (optionnels pour l'instant)
     @Column(nullable = false)
     private Boolean notificationSent = false;
