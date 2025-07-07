@@ -82,6 +82,13 @@ public class EventService {
     public TaskDto createTaskFromCalendar(String email, CreateTaskFromCalendarRequest request) {
         User user = userService.findByEmail(email);
 
+        // 🔍 AJOUTEZ CES LOGS
+        log.info("=== BACKEND RECEIVED ===");
+        log.info("scheduledDate reçu: {}", request.getScheduledDate());
+        log.info("dueDate reçu: {}", request.getDueDate());
+        log.info("Request complet: {}", request);
+        log.info("========================");
+
         Task task = new Task();
         task.setTitle(request.getTitle());
         task.setDescription(request.getDescription());
@@ -92,6 +99,13 @@ public class EventService {
         task.setToken(UUID.randomUUID().toString());
 
         Task savedTask = taskRepository.save(task);
+
+        // 🔍 AJOUTEZ CE LOG AUSSI
+        log.info("=== TASK SAVED ===");
+        log.info("scheduledDate final en BD: {}", savedTask.getScheduledDate());
+        log.info("ID de la tâche: {}", savedTask.getId());
+        log.info("==================");
+
         return convertTaskToDto(savedTask);
     }
 
@@ -230,8 +244,15 @@ public class EventService {
 
         // Si lié à une tâche
         if (event.getRelatedTask() != null) {
+            Task task = event.getRelatedTask();
             dto.setRelatedTaskId(event.getRelatedTask().getId());
             dto.setRelatedTaskTitle(event.getRelatedTask().getTitle());
+            dto.setDescription(task.getDescription());
+            dto.setTaskPriority(task.getPriority());
+
+            if (task.getDueDate() != null) {
+                dto.setEndDate(task.getDueDate());
+            }
         }
 
         // Convertir les rappels

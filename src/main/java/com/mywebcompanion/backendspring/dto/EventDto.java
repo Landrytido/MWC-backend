@@ -19,7 +19,7 @@ public class EventDto {
     private EventMode mode;
     private String meetingLink;
     private EventType type;
-
+    private Integer taskPriority;
     private Long relatedTaskId;
     private String relatedTaskTitle;
 
