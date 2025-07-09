@@ -109,25 +109,20 @@ public class EventService {
         return convertTaskToDto(savedTask);
     }
 
-    // Vue calendrier pour un mois
     public List<CalendarViewDto> getMonthlyCalendarView(String email, int year, int month) {
         User user = userService.findByEmail(email);
 
-        // Récupérer événements du mois
-        List<Event> events = eventRepository.findByUserIdAndYearAndMonth(user.getId(), year, month);
+        List<Event> events = eventRepository.findByUserIdAndYearAndMonthWithTask(user.getId(), year, month);
 
-        // Récupérer tâches planifiées du mois
         LocalDate startOfMonth = LocalDate.of(year, month, 1);
         LocalDate endOfMonth = startOfMonth.withDayOfMonth(startOfMonth.lengthOfMonth());
 
-        // CORRECTION: Utiliser la bonne signature de méthode
         LocalDateTime startDateTime = startOfMonth.atStartOfDay();
         LocalDateTime endDateTime = endOfMonth.atTime(23, 59, 59);
 
         List<Task> tasks = taskRepository.findTasksInDateRange(user.getId(), startOfMonth, endOfMonth, startDateTime,
                 endDateTime);
 
-        // Grouper par jour
         Map<LocalDate, List<Event>> eventsByDate = events.stream()
                 .collect(Collectors.groupingBy(e -> e.getStartDate().toLocalDate()));
 
@@ -136,7 +131,6 @@ public class EventService {
                 .collect(Collectors.groupingBy(t -> t.getScheduledDate() != null ? t.getScheduledDate()
                         : t.getDueDate() != null ? t.getDueDate().toLocalDate() : LocalDate.now()));
 
-        // Créer la vue calendrier
         return IntStream.rangeClosed(1, endOfMonth.getDayOfMonth())
                 .mapToObj(day -> LocalDate.of(year, month, day))
                 .map(date -> {
@@ -227,7 +221,6 @@ public class EventService {
         }
     }
 
-    // MÉTHODE MANQUANTE : Conversion Event vers EventDto
     private EventDto convertToDto(Event event) {
         EventDto dto = new EventDto();
         dto.setId(event.getId());
@@ -242,20 +235,19 @@ public class EventService {
         dto.setCreatedAt(event.getCreatedAt());
         dto.setUpdatedAt(event.getUpdatedAt());
 
-        // Si lié à une tâche
         if (event.getRelatedTask() != null) {
             Task task = event.getRelatedTask();
             dto.setRelatedTaskId(event.getRelatedTask().getId());
             dto.setRelatedTaskTitle(event.getRelatedTask().getTitle());
             dto.setDescription(task.getDescription());
             dto.setTaskPriority(task.getPriority());
+            dto.setDueDate(task.getDueDate());
 
             if (task.getDueDate() != null) {
                 dto.setEndDate(task.getDueDate());
             }
         }
 
-        // Convertir les rappels
         if (event.getReminders() != null) {
             dto.setReminders(event.getReminders().stream()
                     .map(this::convertReminderToDto)
@@ -265,7 +257,6 @@ public class EventService {
         return dto;
     }
 
-    // MÉTHODE MANQUANTE : Conversion EventReminder vers EventReminderDto
     private EventReminderDto convertReminderToDto(EventReminder reminder) {
         EventReminderDto dto = new EventReminderDto();
         dto.setId(reminder.getId());
@@ -277,8 +268,6 @@ public class EventService {
         return dto;
     }
 
-    // MÉTHODE MANQUANTE : Conversion Task vers TaskDto (réutilise celle de
-    // TaskService)
     private TaskDto convertTaskToDto(Task task) {
         TaskDto dto = new TaskDto();
         dto.setId(task.getId());
@@ -301,7 +290,6 @@ public class EventService {
     public CalendarViewDto getDayView(String email, String dateString) {
         User user = userService.findByEmail(email);
 
-        // Parser la date (format attendu: "2025-01-15")
         LocalDate date;
         try {
             date = LocalDate.parse(dateString);
@@ -309,10 +297,8 @@ public class EventService {
             throw new ValidationException("Format de date invalide. Utilisez YYYY-MM-DD");
         }
 
-        // Récupérer événements de la journée
         List<Event> events = eventRepository.findByUserIdAndDate(user.getId(), date);
 
-        // Récupérer tâches de la journée (scheduledDate ou dueDate)
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.atTime(23, 59, 59);
 
@@ -323,12 +309,10 @@ public class EventService {
                 startOfDay,
                 endOfDay);
 
-        // Filtrer les tâches pour éviter les doublons avec événements liés
         List<Task> filteredTasks = tasks.stream()
                 .filter(t -> t.getCalendarEvent() == null)
                 .collect(Collectors.toList());
 
-        // Créer la vue du jour
         CalendarViewDto dayView = new CalendarViewDto();
         dayView.setDate(date);
 
