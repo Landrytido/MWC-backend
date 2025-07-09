@@ -65,9 +65,10 @@ public class NotebookController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteNotebook(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable Long id) {
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "false") boolean forceDelete) {
         String email = userDetails.getUsername();
-        notebookService.deleteNotebook(email, id);
+        notebookService.deleteNotebook(email, id, forceDelete);
         return ResponseEntity.noContent().build();
     }
 }

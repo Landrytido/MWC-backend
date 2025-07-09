@@ -10,7 +10,6 @@ import java.util.Optional;
 
 public interface NoteRepository extends JpaRepository<Note, Long> {
 
-    // Nouvelles méthodes basées sur userId (Spring Security + JWT)
     List<Note> findByUserIdOrderByCreatedAtDesc(Long userId);
 
     Optional<Note> findByIdAndUserId(Long id, Long userId);
@@ -20,6 +19,9 @@ public interface NoteRepository extends JpaRepository<Note, Long> {
     List<Note> findByUserIdAndNotebookIsNull(Long userId);
 
     List<Note> findByUserIdAndTitleContainingIgnoreCase(Long userId, String title);
+
+    @Query("SELECT n FROM Note n JOIN n.labels l WHERE l.id = :labelId AND n.user.id = :userId")
+    List<Note> findByLabelsIdAndUserId(@Param("labelId") String labelId, @Param("userId") Long userId);
 
     @Query("SELECT n FROM Note n WHERE n.user.id = :userId AND " +
             "(LOWER(n.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +

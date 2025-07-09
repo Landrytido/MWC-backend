@@ -2,8 +2,10 @@ package com.mywebcompanion.backendspring.service;
 
 import com.mywebcompanion.backendspring.dto.LabelDto;
 import com.mywebcompanion.backendspring.model.Label;
+import com.mywebcompanion.backendspring.model.Note;
 import com.mywebcompanion.backendspring.model.User;
 import com.mywebcompanion.backendspring.repository.LabelRepository;
+import com.mywebcompanion.backendspring.repository.NoteRepository;
 import com.mywebcompanion.backendspring.exception.ResourceNotFoundException;
 import com.mywebcompanion.backendspring.exception.DuplicateResourceException;
 import com.mywebcompanion.backendspring.exception.ValidationException;
@@ -21,6 +23,7 @@ public class LabelService {
 
     private final LabelRepository labelRepository;
     private final UserService userService;
+    private final NoteRepository noteRepository;
 
     public List<LabelDto> getAllLabelsByUserEmail(String email) {
         User user = userService.findByEmail(email);
@@ -91,6 +94,14 @@ public class LabelService {
         if (noteCount > 0 && !forceDelete) {
             throw new ValidationException(
                     "Ce label est utilisé par " + noteCount + " note(s). Utilisez forceDelete=true pour le supprimer.");
+        }
+
+        if (forceDelete && noteCount > 0) {
+            List<Note> notesWithLabel = noteRepository.findByLabelsIdAndUserId(labelId, user.getId());
+            for (Note note : notesWithLabel) {
+                note.getLabels().removeIf(l -> l.getId().equals(labelId));
+            }
+            noteRepository.saveAll(notesWithLabel);
         }
 
         labelRepository.delete(label);

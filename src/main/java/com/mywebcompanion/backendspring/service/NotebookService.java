@@ -1,8 +1,10 @@
 package com.mywebcompanion.backendspring.service;
 
 import com.mywebcompanion.backendspring.dto.NotebookDto;
+import com.mywebcompanion.backendspring.model.Note;
 import com.mywebcompanion.backendspring.model.Notebook;
 import com.mywebcompanion.backendspring.model.User;
+import com.mywebcompanion.backendspring.repository.NoteRepository;
 import com.mywebcompanion.backendspring.repository.NotebookRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ public class NotebookService {
 
     private final NotebookRepository notebookRepository;
     private final UserService userService;
+    private final NoteRepository noteRepository;
 
     public List<NotebookDto> getAllNotebooksByUserEmail(String email) {
         User user = userService.findByEmail(email);
@@ -49,16 +52,24 @@ public class NotebookService {
         return convertToDto(updatedNotebook);
     }
 
-    public void deleteNotebook(String email, Long notebookId) {
+    @Transactional
+    public void deleteNotebook(String email, Long notebookId, boolean forceDelete) {
         User user = userService.findByEmail(email);
         Notebook notebook = notebookRepository.findByIdAndUserId(notebookId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Carnet non trouvé ou accès non autorisé"));
 
-        // Vérifier s'il y a des notes dans ce carnet
-        Long noteCount = notebookRepository.countNotesByNotebookIdAndUserId(notebookId, user.getId());
-        if (noteCount > 0) {
-            throw new RuntimeException("Impossible de supprimer un carnet contenant des notes. " +
-                    "Déplacez d'abord les " + noteCount + " note(s) vers un autre carnet.");
+        if (forceDelete) {
+            List<Note> notes = noteRepository.findByUserIdAndNotebookId(user.getId(), notebookId);
+            for (Note note : notes) {
+                note.setNotebook(null);
+            }
+            noteRepository.saveAll(notes);
+        } else {
+            Long noteCount = notebookRepository.countNotesByNotebookIdAndUserId(notebookId, user.getId());
+            if (noteCount > 0) {
+                throw new RuntimeException("Impossible de supprimer un carnet contenant des notes. " +
+                        "Déplacez d'abord les " + noteCount + " note(s) vers un autre carnet.");
+            }
         }
 
         notebookRepository.delete(notebook);
@@ -79,7 +90,6 @@ public class NotebookService {
         dto.setCreatedAt(notebook.getCreatedAt());
         dto.setUpdatedAt(notebook.getUpdatedAt());
 
-        // Compter les notes dans ce carnet pour cet utilisateur
         dto.setNoteCount(
                 notebookRepository.countNotesByNotebookIdAndUserId(notebook.getId(), notebook.getUser().getId()));
 

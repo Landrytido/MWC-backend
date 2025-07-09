@@ -25,7 +25,7 @@ public class Notebook {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @OneToMany(mappedBy = "notebook", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "notebook", cascade = CascadeType.PERSIST)
     private List<Note> notes = new ArrayList<>();
 
     @CreationTimestamp
