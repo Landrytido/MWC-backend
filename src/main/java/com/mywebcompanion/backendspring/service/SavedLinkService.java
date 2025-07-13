@@ -7,7 +7,8 @@ import com.mywebcompanion.backendspring.repository.SavedLinkRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.util.HashSet;
+import java.util.Set;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,6 +19,15 @@ public class SavedLinkService {
 
     private final SavedLinkRepository savedLinkRepository;
     private final UserService userService;
+
+    public List<SavedLinkDto> getAllSavedLinksByUserEmail(String email) {
+        User user = userService.findByEmail(email);
+        List<SavedLink> savedLinks = savedLinkRepository.findByUserId(user.getId());
+
+        return savedLinks.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
 
     public List<SavedLinkDto> getLinksByUserEmail(String email) {
         User user = userService.findByEmail(email);
@@ -83,5 +93,29 @@ public class SavedLinkService {
         dto.setCreatedAt(link.getCreatedAt());
         dto.setUpdatedAt(link.getUpdatedAt());
         return dto;
+    }
+
+    public List<SavedLinkDto> searchLinks(String email, String keyword) {
+        User user = userService.findByEmail(email);
+
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return getAllSavedLinksByUserEmail(email);
+        }
+
+        String trimmedKeyword = keyword.trim();
+
+        List<SavedLink> linksByTitle = savedLinkRepository.findByUserIdAndTitleContainingIgnoreCase(user.getId(),
+                trimmedKeyword);
+        List<SavedLink> linksByUrl = savedLinkRepository.findByUserIdAndUrlContainingIgnoreCase(user.getId(),
+                trimmedKeyword);
+
+        Set<SavedLink> uniqueLinks = new HashSet<>();
+        uniqueLinks.addAll(linksByTitle);
+        uniqueLinks.addAll(linksByUrl);
+
+        return uniqueLinks.stream()
+                .map(this::convertToDto)
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt())) // Trier par date décroissante
+                .collect(Collectors.toList());
     }
 }

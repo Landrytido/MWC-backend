@@ -24,6 +24,22 @@ public class SavedLinkController {
         return ResponseEntity.ok(links);
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<List<SavedLinkDto>> searchLinks(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam String keyword) {
+        String email = userDetails.getUsername();
+        List<SavedLinkDto> links = savedLinkService.searchLinks(email, keyword);
+        return ResponseEntity.ok(links);
+    }
+
+    @GetMapping("/count")
+    public ResponseEntity<Long> getLinkCount(@AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails.getUsername();
+        Long count = savedLinkService.getLinkCount(email);
+        return ResponseEntity.ok(count);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<SavedLinkDto> getLinkById(
             @AuthenticationPrincipal UserDetails userDetails,

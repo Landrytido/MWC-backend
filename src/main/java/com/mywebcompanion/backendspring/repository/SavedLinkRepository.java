@@ -10,7 +10,6 @@ import java.util.Optional;
 @Repository
 public interface SavedLinkRepository extends JpaRepository<SavedLink, Long> {
 
-    // Nouvelles méthodes basées sur userId (Spring Security + JWT)
     List<SavedLink> findByUserIdOrderByCreatedAtDesc(Long userId);
 
     Optional<SavedLink> findByIdAndUserId(Long id, Long userId);
@@ -21,6 +20,6 @@ public interface SavedLinkRepository extends JpaRepository<SavedLink, Long> {
 
     List<SavedLink> findByUserIdAndUrlContainingIgnoreCase(Long userId, String url);
 
-    // Méthodes dépréciées (pour transition temporaire si nécessaire)
+    List<SavedLink> findByUserId(Long userId);
 
 }

@@ -2,6 +2,7 @@ package com.mywebcompanion.backendspring.controller;
 
 import com.mywebcompanion.backendspring.dto.SavedLinkGroupDto;
 import com.mywebcompanion.backendspring.service.SavedLinkGroupService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,7 +19,6 @@ public class SavedLinkGroupController {
 
     private final SavedLinkGroupService savedLinkGroupService;
 
-    // Obtenir tous les liens d'un groupe
     @GetMapping("/{groupId}/links")
     public ResponseEntity<List<SavedLinkGroupDto>> getLinksInGroup(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -28,7 +28,6 @@ public class SavedLinkGroupController {
         return ResponseEntity.ok(links);
     }
 
-    // Ajouter un lien à un groupe
     @PostMapping("/{groupId}/links/{linkId}")
     public ResponseEntity<SavedLinkGroupDto> addLinkToGroup(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -42,7 +41,6 @@ public class SavedLinkGroupController {
         return ResponseEntity.ok(result);
     }
 
-    // Mettre à jour le nom d'un lien dans un groupe
     @PutMapping("/{groupId}/links/{linkId}")
     public ResponseEntity<SavedLinkGroupDto> updateLinkInGroup(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -60,7 +58,6 @@ public class SavedLinkGroupController {
         return ResponseEntity.ok(result);
     }
 
-    // Incrémenter le compteur de clics d'un lien
     @PostMapping("/{groupId}/links/{linkId}/click")
     public ResponseEntity<SavedLinkGroupDto> incrementClickCounter(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -71,7 +68,6 @@ public class SavedLinkGroupController {
         return ResponseEntity.ok(result);
     }
 
-    // Supprimer un lien d'un groupe
     @DeleteMapping("/{groupId}/links/{linkId}")
     public ResponseEntity<Void> removeLinkFromGroup(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -82,7 +78,6 @@ public class SavedLinkGroupController {
         return ResponseEntity.noContent().build();
     }
 
-    // Obtenir les liens les plus cliqués d'un groupe
     @GetMapping("/{groupId}/links/top-clicked")
     public ResponseEntity<List<SavedLinkGroupDto>> getTopClickedLinks(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -92,7 +87,6 @@ public class SavedLinkGroupController {
         return ResponseEntity.ok(topLinks);
     }
 
-    // Obtenir les liens les plus cliqués globalement
     @GetMapping("/links/global-top-clicked")
     public ResponseEntity<List<SavedLinkGroupDto>> getGlobalTopClickedLinks(
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -100,4 +94,5 @@ public class SavedLinkGroupController {
         List<SavedLinkGroupDto> topLinks = savedLinkGroupService.getGlobalTopClickedLinks(email);
         return ResponseEntity.ok(topLinks);
     }
+
 }
