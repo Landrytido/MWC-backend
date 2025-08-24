@@ -3,6 +3,8 @@ package com.mywebcompanion.backendspring.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -43,11 +45,9 @@ public class EventService {
     private final TaskRepository taskRepository;
     private final UserService userService;
 
-    // Créer un événement
     public EventDto createEvent(String email, CreateEventRequest request) {
         User user = userService.findByEmail(email);
 
-        // Validations
         validateEventDates(request.getStartDate(), request.getEndDate());
 
         Event event = new Event();
@@ -61,7 +61,6 @@ public class EventService {
         event.setType(request.getType());
         event.setUser(user);
 
-        // Lier à une tâche existante si spécifié
         if (request.getRelatedTaskId() != null) {
             Task task = taskRepository.findByIdAndUserId(request.getRelatedTaskId(), user.getId())
                     .orElseThrow(() -> new RuntimeException("Tâche non trouvée"));
@@ -71,7 +70,6 @@ public class EventService {
 
         Event savedEvent = eventRepository.save(event);
 
-        // Créer les rappels
         if (request.getReminders() != null && !request.getReminders().isEmpty()) {
             createReminders(savedEvent, request.getReminders());
         }
@@ -82,7 +80,6 @@ public class EventService {
     public TaskDto createTaskFromCalendar(String email, CreateTaskFromCalendarRequest request) {
         User user = userService.findByEmail(email);
 
-        // 🔍 AJOUTEZ CES LOGS
         log.info("=== BACKEND RECEIVED ===");
         log.info("scheduledDate reçu: {}", request.getScheduledDate());
         log.info("dueDate reçu: {}", request.getDueDate());
@@ -100,7 +97,6 @@ public class EventService {
 
         Task savedTask = taskRepository.save(task);
 
-        // 🔍 AJOUTEZ CE LOG AUSSI
         log.info("=== TASK SAVED ===");
         log.info("scheduledDate final en BD: {}", savedTask.getScheduledDate());
         log.info("ID de la tâche: {}", savedTask.getId());
@@ -126,10 +122,22 @@ public class EventService {
         Map<LocalDate, List<Event>> eventsByDate = events.stream()
                 .collect(Collectors.groupingBy(e -> e.getStartDate().toLocalDate()));
 
-        Map<LocalDate, List<Task>> tasksByDate = tasks.stream()
+        Map<LocalDate, List<Task>> tasksByDate = new HashMap<>();
+
+        tasks.stream()
                 .filter(t -> t.getCalendarEvent() == null) // Éviter les doublons
-                .collect(Collectors.groupingBy(t -> t.getScheduledDate() != null ? t.getScheduledDate()
-                        : t.getDueDate() != null ? t.getDueDate().toLocalDate() : LocalDate.now()));
+                .forEach(task -> {
+                    if (task.getScheduledDate() != null) {
+                        tasksByDate.computeIfAbsent(task.getScheduledDate(), k -> new ArrayList<>()).add(task);
+                    }
+
+                    if (task.getDueDate() != null) {
+                        LocalDate dueLocalDate = task.getDueDate().toLocalDate();
+                        if (task.getScheduledDate() == null || !task.getScheduledDate().equals(dueLocalDate)) {
+                            tasksByDate.computeIfAbsent(dueLocalDate, k -> new ArrayList<>()).add(task);
+                        }
+                    }
+                });
 
         return IntStream.rangeClosed(1, endOfMonth.getDayOfMonth())
                 .mapToObj(day -> LocalDate.of(year, month, day))
@@ -152,7 +160,6 @@ public class EventService {
                 .collect(Collectors.toList());
     }
 
-    // CRUD supplémentaires
     public List<EventDto> getAllEvents(String email) {
         User user = userService.findByEmail(email);
         return eventRepository.findByUserIdOrderByStartDateAsc(user.getId())
@@ -173,7 +180,6 @@ public class EventService {
         Event event = eventRepository.findByIdAndUserId(eventId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Événement non trouvé"));
 
-        // Validations
         validateEventDates(request.getStartDate(), request.getEndDate());
 
         event.setTitle(request.getTitle());
@@ -195,8 +201,6 @@ public class EventService {
         eventRepository.delete(event);
     }
 
-    // ========= MÉTHODES PRIVÉES DE CONVERSION =========
-
     private void createReminders(Event event, List<CreateReminderRequest> reminderRequests) {
         for (CreateReminderRequest request : reminderRequests) {
             EventReminder reminder = new EventReminder();
@@ -204,7 +208,6 @@ public class EventService {
             reminder.setType(request.getType());
             reminder.setMinutesBefore(request.getMinutesBefore());
 
-            // Calculer la date d'envoi
             LocalDateTime scheduledFor = event.getStartDate().minusMinutes(request.getMinutesBefore());
             reminder.setScheduledFor(scheduledFor);
 
