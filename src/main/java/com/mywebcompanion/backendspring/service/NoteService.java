@@ -169,7 +169,7 @@ public class NoteService {
 
     public List<NoteDto> searchNotes(String email, String keyword) {
         User user = userService.findByEmail(email);
-        List<Note> notes = noteRepository.findByUserIdAndTitleContainingIgnoreCase(user.getId(), keyword);
+        List<Note> notes = noteRepository.findByUserIdAndContentContaining(user.getId(), keyword);
 
         return notes.stream()
                 .map(this::convertToDto)

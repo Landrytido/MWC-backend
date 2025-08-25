@@ -88,6 +88,15 @@ public class NoteController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<List<NoteDto>> searchNotes(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam String keyword) {
+        String email = userDetails.getUsername();
+        List<NoteDto> notes = noteService.searchNotes(email, keyword);
+        return ResponseEntity.ok(notes);
+    }
+
     @PostMapping("/notebooks/{notebookId}")
     public ResponseEntity<NoteDto> createNoteInNotebook(
             @AuthenticationPrincipal UserDetails userDetails,
