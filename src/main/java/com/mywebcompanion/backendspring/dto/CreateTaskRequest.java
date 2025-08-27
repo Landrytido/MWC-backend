@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -18,9 +17,7 @@ public class CreateTaskRequest {
     @Size(max = 1000, message = "La description ne peut pas dépasser 1000 caractères")
     private String description;
 
-    private LocalDateTime dueDate; // Échéance flexible (optionnelle)
-
-    private LocalDate scheduledDate; // Planification quotidienne (optionnelle)
+    private LocalDateTime dueDate; // Date/heure unifiée
 
     @Min(value = 1, message = "La priorité doit être entre 1 et 3")
     @Max(value = 3, message = "La priorité doit être entre 1 et 3")

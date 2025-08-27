@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -16,7 +15,6 @@ import org.springframework.stereotype.Service;
 import com.mywebcompanion.backendspring.dto.CalendarViewDto;
 import com.mywebcompanion.backendspring.dto.CreateEventRequest;
 import com.mywebcompanion.backendspring.dto.CreateReminderRequest;
-import com.mywebcompanion.backendspring.dto.CreateTaskFromCalendarRequest;
 import com.mywebcompanion.backendspring.dto.EventDto;
 import com.mywebcompanion.backendspring.dto.EventReminderDto;
 import com.mywebcompanion.backendspring.dto.TaskDto;
@@ -77,34 +75,6 @@ public class EventService {
         return convertToDto(savedEvent);
     }
 
-    public TaskDto createTaskFromCalendar(String email, CreateTaskFromCalendarRequest request) {
-        User user = userService.findByEmail(email);
-
-        log.info("=== BACKEND RECEIVED ===");
-        log.info("scheduledDate reçu: {}", request.getScheduledDate());
-        log.info("dueDate reçu: {}", request.getDueDate());
-        log.info("Request complet: {}", request);
-        log.info("========================");
-
-        Task task = new Task();
-        task.setTitle(request.getTitle());
-        task.setDescription(request.getDescription());
-        task.setScheduledDate(request.getScheduledDate());
-        task.setDueDate(request.getDueDate());
-        task.setPriority(request.getPriority() != null ? request.getPriority() : 2);
-        task.setUser(user);
-        task.setToken(UUID.randomUUID().toString());
-
-        Task savedTask = taskRepository.save(task);
-
-        log.info("=== TASK SAVED ===");
-        log.info("scheduledDate final en BD: {}", savedTask.getScheduledDate());
-        log.info("ID de la tâche: {}", savedTask.getId());
-        log.info("==================");
-
-        return convertTaskToDto(savedTask);
-    }
-
     public List<CalendarViewDto> getMonthlyCalendarView(String email, int year, int month) {
         User user = userService.findByEmail(email);
 
@@ -127,15 +97,9 @@ public class EventService {
         tasks.stream()
                 .filter(t -> t.getCalendarEvent() == null) // Éviter les doublons
                 .forEach(task -> {
-                    if (task.getScheduledDate() != null) {
-                        tasksByDate.computeIfAbsent(task.getScheduledDate(), k -> new ArrayList<>()).add(task);
-                    }
-
                     if (task.getDueDate() != null) {
-                        LocalDate dueLocalDate = task.getDueDate().toLocalDate();
-                        if (task.getScheduledDate() == null || !task.getScheduledDate().equals(dueLocalDate)) {
-                            tasksByDate.computeIfAbsent(dueLocalDate, k -> new ArrayList<>()).add(task);
-                        }
+                        LocalDate taskDate = task.getDueDate().toLocalDate();
+                        tasksByDate.computeIfAbsent(taskDate, k -> new ArrayList<>()).add(task);
                     }
                 });
 
@@ -277,14 +241,12 @@ public class EventService {
         dto.setTitle(task.getTitle());
         dto.setDescription(task.getDescription());
         dto.setDueDate(task.getDueDate());
-        dto.setScheduledDate(task.getScheduledDate());
         dto.setPriority(task.getPriority());
         dto.setCompleted(task.getCompleted());
         dto.setCompletedAt(task.getCompletedAt());
         dto.setCreatedAt(task.getCreatedAt());
         dto.setUpdatedAt(task.getUpdatedAt());
         dto.setCarriedOver(task.getCarriedOver());
-        dto.setOriginalDate(task.getOriginalDate());
         dto.setOrderIndex(task.getOrderIndex());
         dto.setStatus(task.getStatus());
         return dto;

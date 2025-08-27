@@ -7,6 +7,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "tasks")
@@ -24,10 +25,7 @@ public class Task {
     private String description;
 
     @Column
-    private LocalDateTime dueDate; // Échéance flexible (optionnelle)
-
-    @Column
-    private LocalDate scheduledDate; // Planification quotidienne (aujourd'hui/demain)
+    private LocalDateTime dueDate; // Date/heure unifiée pour toutes les tâches
 
     @Column(nullable = false)
     private Integer priority = 2; // 1=basse, 2=moyenne, 3=haute
@@ -38,12 +36,9 @@ public class Task {
     @Column
     private LocalDateTime completedAt; // Quand la tâche a été complétée
 
-    // Champs pour le système de planification quotidienne
+    // Champs pour le système de report de tâches
     @Column(nullable = false)
     private Boolean carriedOver = false; // Si la tâche a été reportée
-
-    @Column
-    private LocalDate originalDate; // Date originale si reportée
 
     @Column(nullable = false)
     private Integer orderIndex = 0; // Ordre d'affichage dans la journée
@@ -84,8 +79,9 @@ public class Task {
     }
 
     public void carryOverTo(LocalDate newDate) {
-        this.originalDate = this.originalDate != null ? this.originalDate : this.scheduledDate;
-        this.scheduledDate = newDate;
+        // Conserver l'heure actuelle si elle existe, sinon 9h par défaut
+        LocalTime timeToKeep = this.dueDate != null ? this.dueDate.toLocalTime() : LocalTime.of(9, 0);
+        this.dueDate = newDate.atTime(timeToKeep);
         this.carriedOver = true;
     }
 
@@ -97,17 +93,17 @@ public class Task {
         LocalDate today = LocalDate.now();
         LocalDate tomorrow = today.plusDays(1);
 
-        if (this.scheduledDate != null) {
-            if (this.scheduledDate.equals(today)) {
+        if (this.dueDate != null) {
+            LocalDate dueDateLocal = this.dueDate.toLocalDate();
+            if (dueDateLocal.equals(today)) {
                 return "today";
             }
-            if (this.scheduledDate.equals(tomorrow)) {
+            if (dueDateLocal.equals(tomorrow)) {
                 return "tomorrow";
             }
-        }
-
-        if (this.dueDate != null && this.dueDate.isBefore(LocalDateTime.now())) {
-            return "overdue";
+            if (this.dueDate.isBefore(LocalDateTime.now())) {
+                return "overdue";
+            }
         }
 
         return "upcoming";
@@ -121,11 +117,11 @@ public class Task {
     }
 
     public boolean isScheduledForToday() {
-        return this.scheduledDate != null && this.scheduledDate.equals(LocalDate.now());
+        return this.dueDate != null && this.dueDate.toLocalDate().equals(LocalDate.now());
     }
 
     public boolean isScheduledForTomorrow() {
         LocalDate tomorrow = LocalDate.now().plusDays(1);
-        return this.scheduledDate != null && this.scheduledDate.equals(tomorrow);
+        return this.dueDate != null && this.dueDate.toLocalDate().equals(tomorrow);
     }
 }

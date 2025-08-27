@@ -40,15 +40,6 @@ public class CalendarController {
         return ResponseEntity.ok(event);
     }
 
-    @PostMapping("/create-task")
-    public ResponseEntity<TaskDto> createTaskFromCalendar(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody CreateTaskFromCalendarRequest request) {
-        String email = userDetails.getUsername();
-        TaskDto task = eventService.createTaskFromCalendar(email, request);
-        return ResponseEntity.ok(task);
-    }
-
     @GetMapping("/events")
     public ResponseEntity<List<EventDto>> getAllEvents(
             @AuthenticationPrincipal UserDetails userDetails) {

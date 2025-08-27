@@ -105,14 +105,14 @@ public class TaskService {
         task.setTitle(request.getTitle().trim());
         task.setDescription(request.getDescription() != null ? request.getDescription().trim() : null);
         task.setDueDate(request.getDueDate());
-        task.setScheduledDate(request.getScheduledDate());
         task.setPriority(request.getPriority());
         task.setUser(user);
         task.setToken(UUID.randomUUID().toString());
 
-        // Définir l'ordre si la tâche est planifiée
-        if (request.getScheduledDate() != null) {
-            Integer nextOrder = taskRepository.findNextOrderIndex(user.getId(), request.getScheduledDate());
+        // Définir l'ordre si la tâche a une date
+        if (request.getDueDate() != null) {
+            LocalDate taskDate = request.getDueDate().toLocalDate();
+            Integer nextOrder = taskRepository.findNextOrderIndex(user.getId(), taskDate);
             task.setOrderIndex(nextOrder != null ? nextOrder : 0);
         } else {
             task.setOrderIndex(request.getOrderIndex());
@@ -136,9 +136,6 @@ public class TaskService {
         if (request.getDueDate() != null) {
             task.setDueDate(request.getDueDate());
         }
-        if (request.getScheduledDate() != null) {
-            task.setScheduledDate(request.getScheduledDate());
-        }
         if (request.getPriority() != null) {
             task.setPriority(request.getPriority());
         }
@@ -151,9 +148,6 @@ public class TaskService {
         }
         if (request.getCarriedOver() != null) {
             task.setCarriedOver(request.getCarriedOver());
-        }
-        if (request.getOriginalDate() != null) {
-            task.setOriginalDate(request.getOriginalDate());
         }
         if (request.getOrderIndex() != null) {
             task.setOrderIndex(request.getOrderIndex());
@@ -331,7 +325,6 @@ public class TaskService {
         dto.setTitle(task.getTitle());
         dto.setDescription(task.getDescription());
         dto.setDueDate(task.getDueDate());
-        dto.setScheduledDate(task.getScheduledDate());
         dto.setPriority(task.getPriority());
         dto.setCompleted(task.getCompleted());
         dto.setCompletedAt(task.getCompletedAt());
@@ -339,7 +332,6 @@ public class TaskService {
         dto.setUpdatedAt(task.getUpdatedAt());
 
         dto.setCarriedOver(task.getCarriedOver());
-        dto.setOriginalDate(task.getOriginalDate());
         dto.setOrderIndex(task.getOrderIndex());
 
         // Statut calculé
