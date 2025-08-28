@@ -5,8 +5,6 @@ import com.mywebcompanion.backendspring.service.WeatherService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,18 +18,11 @@ public class WeatherController {
 
     private final WeatherService weatherService;
 
-    /**
-     * Obtient la météo actuelle pour une localisation
-     * GET /api/weather/current?location=Paris
-     * GET /api/weather/current?location=48.8566,2.3522
-     */
     @GetMapping("/current")
-    public ResponseEntity<?> getCurrentWeather(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam String location) {
+    public ResponseEntity<?> getCurrentWeather(@RequestParam String location) {
 
         try {
-            log.info("Demande météo actuelle pour: {} par {}", location, userDetails.getUsername());
+            log.info("Demande météo actuelle pour: {}", location);
             WeatherResponseDto weather = weatherService.getCurrentWeather(location);
             return ResponseEntity.ok(weather);
 
@@ -41,21 +32,15 @@ public class WeatherController {
         }
     }
 
-    /**
-     * Obtient les prévisions météo pour plusieurs jours
-     * GET /api/weather/forecast?location=Paris&days=5
-     */
     @GetMapping("/forecast")
     public ResponseEntity<?> getForecast(
-            @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam String location,
             @RequestParam(defaultValue = "5") int days) {
 
         try {
-            // Limiter entre 1 et 10 jours
             days = Math.max(1, Math.min(days, 10));
 
-            log.info("Demande prévisions {} jours pour: {} par {}", days, location, userDetails.getUsername());
+            log.info("Demande prévisions {} jours pour: {}", days, location);
             ForecastResponseDto forecast = weatherService.getForecast(location, days);
             return ResponseEntity.ok(forecast);
 
@@ -65,23 +50,16 @@ public class WeatherController {
         }
     }
 
-    /**
-     * Recherche des villes pour l'autocomplétion
-     * GET /api/weather/search?q=Par
-     */
     @GetMapping("/search")
-    public ResponseEntity<?> searchLocations(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @RequestParam String q) {
+    public ResponseEntity<?> searchLocations(@RequestParam String q) {
 
         try {
-            // Minimum 2 caractères pour la recherche
             if (q.length() < 2) {
                 return ResponseEntity.badRequest()
                         .body(new WeatherErrorDto("Minimum 2 caractères requis", "QUERY_TOO_SHORT"));
             }
 
-            log.info("Recherche de villes: '{}' par {}", q, userDetails.getUsername());
+            log.info("Recherche de villes: '{}'", q);
             List<LocationDto> locations = weatherService.searchLocations(q);
             return ResponseEntity.ok(locations);
 
@@ -91,16 +69,11 @@ public class WeatherController {
         }
     }
 
-    /**
-     * Endpoint de test pour vérifier le service météo
-     * GET /api/weather/status
-     */
     @GetMapping("/status")
-    public ResponseEntity<?> getWeatherStatus(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<?> getWeatherStatus() {
         try {
-            log.info("Vérification statut météo par {}", userDetails.getUsername());
+            log.info("Vérification statut météo");
 
-            // Test simple avec Paris
             WeatherResponseDto testWeather = weatherService.getCurrentWeather("Paris");
 
             return ResponseEntity.ok().body(Map.of(
@@ -118,9 +91,6 @@ public class WeatherController {
         }
     }
 
-    /**
-     * Gestion centralisée des erreurs météo
-     */
     private ResponseEntity<WeatherErrorDto> handleWeatherError(String errorMessage) {
         WeatherErrorDto error;
 
