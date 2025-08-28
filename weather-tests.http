@@ -1,0 +1,14 @@
+### Test endpoint status météo
+GET http://localhost:8080/api/weather/status
+
+### Test endpoint météo actuelle (mock)
+GET http://localhost:8080/api/weather/current?city=Paris
+
+### Test endpoint prévisions (mock)
+GET http://localhost:8080/api/weather/forecast?city=Lyon&days=3
+
+### Test endpoint recherche de villes (mock)
+GET http://localhost:8080/api/weather/search?query=Par
+
+### Test avec une ville invalide
+GET http://localhost:8080/api/weather/current?city=INVALID_CITY_NAME_123
