@@ -14,6 +14,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Service
@@ -117,6 +118,70 @@ public class WeatherService {
             log.error("Erreur API météo: {}", e.getMessage());
             if (e.getStatusCode().value() == 400) {
                 throw new RuntimeException("LOCATION_NOT_FOUND");
+            }
+            throw new RuntimeException("WEATHER_API_ERROR");
+        }
+    }
+
+    /**
+     * Obtient la météo actuelle pour des coordonnées GPS
+     */
+    public WeatherResponseDto getCurrentWeatherByCoordinates(double lat, double lon) {
+        try {
+            if (apiKey.isEmpty()) {
+                throw new RuntimeException("WEATHER_API_KEY_MISSING");
+            }
+
+            String coordinates = String.format(Locale.US, "%.6f,%.6f", lat, lon);
+            String url = String.format("%s/current.json?key=%s&q=%s&aqi=no",
+                    apiUrl, apiKey, coordinates);
+
+            ResponseEntity<Map<String, Object>> responseEntity = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<Map<String, Object>>() {
+                    });
+
+            Map<String, Object> response = responseEntity.getBody();
+            return mapToCurrentWeather(response);
+
+        } catch (HttpClientErrorException e) {
+            log.error("Erreur API météo avec coordonnées lat={}, lon={}: {}", lat, lon, e.getMessage());
+            if (e.getStatusCode().value() == 400) {
+                throw new RuntimeException("INVALID_COORDINATES");
+            }
+            throw new RuntimeException("WEATHER_API_ERROR");
+        }
+    }
+
+    /**
+     * Obtient les prévisions météo pour des coordonnées GPS
+     */
+    public ForecastResponseDto getForecastByCoordinates(double lat, double lon, int days) {
+        try {
+            if (apiKey.isEmpty()) {
+                throw new RuntimeException("WEATHER_API_KEY_MISSING");
+            }
+
+            String coordinates = String.format(Locale.US, "%.6f,%.6f", lat, lon);
+            String url = String.format("%s/forecast.json?key=%s&q=%s&days=%d&aqi=no",
+                    apiUrl, apiKey, coordinates, days);
+
+            ResponseEntity<Map<String, Object>> responseEntity = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    null,
+                    new ParameterizedTypeReference<Map<String, Object>>() {
+                    });
+
+            Map<String, Object> response = responseEntity.getBody();
+            return mapToForecast(response);
+
+        } catch (HttpClientErrorException e) {
+            log.error("Erreur API météo avec coordonnées lat={}, lon={}: {}", lat, lon, e.getMessage());
+            if (e.getStatusCode().value() == 400) {
+                throw new RuntimeException("INVALID_COORDINATES");
             }
             throw new RuntimeException("WEATHER_API_ERROR");
         }

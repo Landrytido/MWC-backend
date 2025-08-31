@@ -69,6 +69,64 @@ public class WeatherController {
         }
     }
 
+    @GetMapping("/current/coordinates")
+    public ResponseEntity<?> getCurrentWeatherByCoordinates(
+            @RequestParam double lat,
+            @RequestParam double lon) {
+
+        try {
+            // Validation des coordonnées
+            if (lat < -90 || lat > 90) {
+                return ResponseEntity.badRequest()
+                        .body(new WeatherErrorDto("Latitude invalide (doit être entre -90 et 90)", "INVALID_LATITUDE"));
+            }
+            if (lon < -180 || lon > 180) {
+                return ResponseEntity.badRequest()
+                        .body(new WeatherErrorDto("Longitude invalide (doit être entre -180 et 180)",
+                                "INVALID_LONGITUDE"));
+            }
+
+            log.info("Demande météo actuelle pour coordonnées: lat={}, lon={}", lat, lon);
+            WeatherResponseDto weather = weatherService.getCurrentWeatherByCoordinates(lat, lon);
+            return ResponseEntity.ok(weather);
+
+        } catch (RuntimeException e) {
+            log.error("Erreur météo actuelle avec coordonnées lat={}, lon={}: {}", lat, lon, e.getMessage());
+            return handleWeatherError(e.getMessage());
+        }
+    }
+
+    @GetMapping("/forecast/coordinates")
+    public ResponseEntity<?> getForecastByCoordinates(
+            @RequestParam double lat,
+            @RequestParam double lon,
+            @RequestParam(defaultValue = "5") int days) {
+
+        try {
+            // Validation des coordonnées
+            if (lat < -90 || lat > 90) {
+                return ResponseEntity.badRequest()
+                        .body(new WeatherErrorDto("Latitude invalide (doit être entre -90 et 90)", "INVALID_LATITUDE"));
+            }
+            if (lon < -180 || lon > 180) {
+                return ResponseEntity.badRequest()
+                        .body(new WeatherErrorDto("Longitude invalide (doit être entre -180 et 180)",
+                                "INVALID_LONGITUDE"));
+            }
+
+            // Validation du nombre de jours
+            days = Math.max(1, Math.min(days, 10));
+
+            log.info("Demande prévisions {} jours pour coordonnées: lat={}, lon={}", days, lat, lon);
+            ForecastResponseDto forecast = weatherService.getForecastByCoordinates(lat, lon, days);
+            return ResponseEntity.ok(forecast);
+
+        } catch (RuntimeException e) {
+            log.error("Erreur prévisions météo avec coordonnées lat={}, lon={}: {}", lat, lon, e.getMessage());
+            return handleWeatherError(e.getMessage());
+        }
+    }
+
     @GetMapping("/status")
     public ResponseEntity<?> getWeatherStatus() {
         try {
@@ -97,6 +155,10 @@ public class WeatherController {
         switch (errorMessage) {
             case "LOCATION_NOT_FOUND":
                 error = new WeatherErrorDto("Ville non trouvée", "LOCATION_NOT_FOUND");
+                return ResponseEntity.badRequest().body(error);
+
+            case "INVALID_COORDINATES":
+                error = new WeatherErrorDto("Coordonnées GPS invalides", "INVALID_COORDINATES");
                 return ResponseEntity.badRequest().body(error);
 
             case "WEATHER_API_ERROR":
