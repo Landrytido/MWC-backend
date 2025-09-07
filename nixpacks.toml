@@ -1,2 +1,9 @@
 # Force Railway à utiliser Nixpacks au lieu de Docker
-provider = "java"
+[phases.setup]
+nixPkgs = ["jdk21"]
+
+[phases.build]
+cmds = ["mvn clean package -DskipTests"]
+
+[phases.start]
+cmd = "java -jar target/backend-spring-0.0.1-SNAPSHOT.jar"
