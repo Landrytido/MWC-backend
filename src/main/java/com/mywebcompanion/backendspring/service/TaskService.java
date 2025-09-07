@@ -1,4 +1,3 @@
-// src/main/java/com/mywebcompanion/backendspring/service/TaskService.java (Version mise à jour)
 package com.mywebcompanion.backendspring.service;
 
 import com.mywebcompanion.backendspring.dto.*;
@@ -22,7 +21,6 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final UserService userService;
 
-    // Méthodes existantes mises à jour
     public List<TaskDto> getAllTasksByUserEmail(String email) {
         User user = userService.findByEmail(email);
         return taskRepository.findByUserIdOrderByPriorityAndCreatedAt(user.getId())

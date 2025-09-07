@@ -124,7 +124,6 @@ public class NoteService {
         Note note = noteRepository.findByIdAndUserId(noteId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Note non trouvée ou accès non autorisé"));
 
-        // Si notebookId est null, on retire la note du carnet
         if (notebookId == null) {
             note.setNotebook(null);
         } else {
@@ -140,7 +139,6 @@ public class NoteService {
     public List<NoteDto> getNotesByNotebookId(String email, Long notebookId) {
         User user = userService.findByEmail(email);
 
-        // Vérifier que le carnet appartient à l'utilisateur
         notebookRepository.findByIdAndUserId(notebookId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Carnet non trouvé"));
 
@@ -150,7 +148,6 @@ public class NoteService {
             return List.of();
         }
 
-        // Optimisation: Récupérer les compteurs de commentaires en une seule requête
         List<Long> noteIds = notes.stream().map(Note::getId).collect(Collectors.toList());
         Map<Long, Long> commentCounts = commentRepository.findCommentCountsByNoteIds(noteIds);
 
@@ -176,7 +173,6 @@ public class NoteService {
                 .collect(Collectors.toList());
     }
 
-    // NOUVEAUX ENDPOINTS POUR LES LABELS
     @Transactional
     public NoteDto addLabelToNote(String email, Long noteId, String labelId) {
         User user = userService.findByEmail(email);

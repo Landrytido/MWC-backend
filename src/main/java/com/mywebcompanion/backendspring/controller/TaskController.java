@@ -56,7 +56,6 @@ public class TaskController {
         return ResponseEntity.ok(tasks);
     }
 
-    // NOUVEAUX ENDPOINTS pour la planification quotidienne
     @GetMapping("/today")
     public ResponseEntity<List<TaskDto>> getTodayTasks(@AuthenticationPrincipal UserDetails userDetails) {
         String email = userDetails.getUsername();
@@ -96,7 +95,6 @@ public class TaskController {
         return ResponseEntity.ok(task);
     }
 
-    // CORRECTION : Utiliser CreateTaskRequest au lieu de TaskDto
     @PostMapping
     public ResponseEntity<TaskDto> createTask(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -111,7 +109,6 @@ public class TaskController {
         return ResponseEntity.ok(createdTask);
     }
 
-    // CORRECTION : Utiliser UpdateTaskRequest au lieu de TaskDto
     @PutMapping("/{id}")
     public ResponseEntity<TaskDto> updateTask(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -152,7 +149,6 @@ public class TaskController {
         return ResponseEntity.ok(Map.of("count", count));
     }
 
-    // NOUVEAUX ENDPOINTS pour les fonctionnalités avancées
     @PostMapping("/end-day")
     public ResponseEntity<List<TaskDto>> endDay(
             @AuthenticationPrincipal UserDetails userDetails,
