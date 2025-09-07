@@ -1,14 +1,2 @@
-# FORCE Nixpacks - NO DOCKER
-providers = ["java"]
-
 [variables]
 JAVA_VERSION = "21"
-
-[phases.setup]
-nixPkgs = ["jdk21", "maven"]
-
-[phases.build]
-cmds = ["mvn clean package -DskipTests"]
-
-[phases.start]
-cmd = "java -Dserver.port=$PORT -jar target/backend-spring-0.0.1-SNAPSHOT.jar"

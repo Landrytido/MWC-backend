@@ -1,3 +1,10 @@
-# Block Docker completely - Force Nixpacks
+# BLOCK ALL DOCKER USAGE - FORCE NIXPACKS
+*
+!pom.xml
+!src/
+!.java-version
+!nixpacks.toml
+!railway.toml
+!.nixpacks
 *
 !target/backend-spring-0.0.1-SNAPSHOT.jar
