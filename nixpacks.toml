@@ -1,4 +1,4 @@
-# Force Railway to use Nixpacks (NOT Docker)
+# Force Railway to use Nixpacks (NOT Docker) - Updated
 [variables]
 JAVA_VERSION = "21"
 
