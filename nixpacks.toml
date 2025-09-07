@@ -1,0 +1,2 @@
+# Force Railway à utiliser Nixpacks au lieu de Docker
+provider = "java"
