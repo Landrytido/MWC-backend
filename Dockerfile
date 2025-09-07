@@ -7,6 +7,6 @@ RUN chmod +x ./mvnw && ./mvnw -B -DskipTests clean package
 # Utilise une image Java 21 officielle pour l'exécution
 FROM eclipse-temurin:21-jre AS runtime
 WORKDIR /app
-COPY --from=build /app/target/backend-spring-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build /app/target/backend-spring-0.0.1-SNAPSHOT.jar target/backend-spring-0.0.1-SNAPSHOT.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-jar", "target/backend-spring-0.0.1-SNAPSHOT.jar"]
