@@ -1,6 +1,5 @@
 # FORCE Nixpacks - NO DOCKER
-[providers]
-java = true
+providers = ["java"]
 
 [variables]
 JAVA_VERSION = "21"
