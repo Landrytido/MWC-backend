@@ -1,15 +1,17 @@
 # Force Railway to use Nixpacks (NOT Docker)
-[build]
-provider = "java"
-
 [variables]
 JAVA_VERSION = "21"
 
 [phases.setup]
 nixPkgs = ["jdk21", "maven"]
 
-[phases.build] 
-cmds = ["mvn clean package -DskipTests"]
+[phases.build]
+cmds = [
+  "mvn --version",
+  "mvn clean package -DskipTests -Dspring.profiles.active=railway",
+  "ls -la target/",
+  "chmod +x start.sh"
+]
 
 [phases.start]
-cmd = "java -Dserver.port=$PORT -jar target/backend-spring-0.0.1-SNAPSHOT.jar"
+cmd = "./start.sh"
