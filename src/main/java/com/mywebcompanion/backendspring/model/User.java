@@ -18,7 +18,7 @@ import java.util.List;
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString(exclude = { "notes", "links", "notebooks", "blocNote", "comments", "tasks",
-        "linkGroups", "files", "password" })
+        "linkGroups", "password" })
 public class User {
 
     @Id
@@ -79,11 +79,6 @@ public class User {
     @JsonIgnore
     @BatchSize(size = 10)
     private List<LinkGroup> linkGroups = new ArrayList<>();
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
-    @BatchSize(size = 10)
-    private List<File> files = new ArrayList<>();
 
     @CreationTimestamp
     private LocalDateTime createdAt;
