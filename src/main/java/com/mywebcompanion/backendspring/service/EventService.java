@@ -14,16 +14,12 @@ import org.springframework.stereotype.Service;
 
 import com.mywebcompanion.backendspring.dto.CalendarViewDto;
 import com.mywebcompanion.backendspring.dto.CreateEventRequest;
-import com.mywebcompanion.backendspring.dto.CreateReminderRequest;
 import com.mywebcompanion.backendspring.dto.EventDto;
-import com.mywebcompanion.backendspring.dto.EventReminderDto;
 import com.mywebcompanion.backendspring.dto.TaskDto;
 import com.mywebcompanion.backendspring.exception.ValidationException;
 import com.mywebcompanion.backendspring.model.Event;
-import com.mywebcompanion.backendspring.model.EventReminder;
 import com.mywebcompanion.backendspring.model.Task;
 import com.mywebcompanion.backendspring.model.User;
-import com.mywebcompanion.backendspring.repository.EventReminderRepository;
 import com.mywebcompanion.backendspring.repository.EventRepository;
 import com.mywebcompanion.backendspring.repository.TaskRepository;
 import com.mywebcompanion.enums.EventType;
@@ -39,7 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 public class EventService {
 
     private final EventRepository eventRepository;
-    private final EventReminderRepository reminderRepository;
     private final TaskRepository taskRepository;
     private final UserService userService;
 
@@ -67,10 +62,6 @@ public class EventService {
         }
 
         Event savedEvent = eventRepository.save(event);
-
-        if (request.getReminders() != null && !request.getReminders().isEmpty()) {
-            createReminders(savedEvent, request.getReminders());
-        }
 
         return convertToDto(savedEvent);
     }
@@ -165,20 +156,6 @@ public class EventService {
         eventRepository.delete(event);
     }
 
-    private void createReminders(Event event, List<CreateReminderRequest> reminderRequests) {
-        for (CreateReminderRequest request : reminderRequests) {
-            EventReminder reminder = new EventReminder();
-            reminder.setEvent(event);
-            reminder.setType(request.getType());
-            reminder.setMinutesBefore(request.getMinutesBefore());
-
-            LocalDateTime scheduledFor = event.getStartDate().minusMinutes(request.getMinutesBefore());
-            reminder.setScheduledFor(scheduledFor);
-
-            reminderRepository.save(reminder);
-        }
-    }
-
     private void validateEventDates(LocalDateTime start, LocalDateTime end) {
         if (end.isBefore(start)) {
             throw new ValidationException("La date de fin doit être après la date de début");
@@ -215,23 +192,6 @@ public class EventService {
             }
         }
 
-        if (event.getReminders() != null) {
-            dto.setReminders(event.getReminders().stream()
-                    .map(this::convertReminderToDto)
-                    .collect(Collectors.toList()));
-        }
-
-        return dto;
-    }
-
-    private EventReminderDto convertReminderToDto(EventReminder reminder) {
-        EventReminderDto dto = new EventReminderDto();
-        dto.setId(reminder.getId());
-        dto.setType(reminder.getType());
-        dto.setMinutesBefore(reminder.getMinutesBefore());
-        dto.setSent(reminder.getSent());
-        dto.setScheduledFor(reminder.getScheduledFor());
-        dto.setCreatedAt(reminder.getCreatedAt());
         return dto;
     }
 

@@ -1,7 +1,6 @@
 package com.mywebcompanion.backendspring.dto;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import com.mywebcompanion.enums.EventMode;
 import com.mywebcompanion.enums.EventType;
@@ -24,7 +23,6 @@ public class EventDto {
     private Long relatedTaskId;
     private String relatedTaskTitle;
 
-    private List<EventReminderDto> reminders;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

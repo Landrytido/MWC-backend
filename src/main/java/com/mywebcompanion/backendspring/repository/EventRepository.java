@@ -37,12 +37,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
         List<Event> findByUserIdAndDate(@Param("userId") Long userId,
                         @Param("date") LocalDate date);
 
-        @Query("SELECT DISTINCT e FROM Event e " +
-                        "JOIN e.reminders r " +
-                        "WHERE r.sent = false " +
-                        "AND r.scheduledFor <= :now")
-        List<Event> findEventsWithPendingReminders(@Param("now") LocalDateTime now);
-
         @Query("SELECT e FROM Event e LEFT JOIN FETCH e.relatedTask WHERE e.user.id = :userId " +
                         "AND YEAR(e.startDate) = :year AND MONTH(e.startDate) = :month " +
                         "ORDER BY e.startDate ASC")

@@ -1,7 +1,6 @@
 package com.mywebcompanion.backendspring.controller;
 
 import com.mywebcompanion.backendspring.dto.*;
-import com.mywebcompanion.backendspring.service.EmailService;
 import com.mywebcompanion.backendspring.service.EventService;
 
 import jakarta.validation.Valid;
@@ -19,7 +18,6 @@ import java.util.List;
 public class CalendarController {
 
     private final EventService eventService;
-    private final EmailService emailService;
 
     @GetMapping("/month/{year}/{month}")
     public ResponseEntity<List<CalendarViewDto>> getMonthlyView(
@@ -74,14 +72,6 @@ public class CalendarController {
         String email = userDetails.getUsername();
         eventService.deleteEvent(email, id);
         return ResponseEntity.noContent().build();
-    }
-
-    @PostMapping("/test-email")
-    public ResponseEntity<String> testEmail(
-            @AuthenticationPrincipal UserDetails userDetails) {
-        String email = userDetails.getUsername();
-        emailService.sendTestEmail(email);
-        return ResponseEntity.ok("Email de test envoyé à " + email);
     }
 
     @GetMapping("/day/{date}")

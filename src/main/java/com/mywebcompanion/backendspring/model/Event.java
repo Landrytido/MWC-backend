@@ -9,8 +9,6 @@ import com.mywebcompanion.enums.EventMode;
 import com.mywebcompanion.enums.EventType;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "events")
@@ -51,9 +49,6 @@ public class Event {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
-    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<EventReminder> reminders = new ArrayList<>();
 
     @CreationTimestamp
     private LocalDateTime createdAt;
