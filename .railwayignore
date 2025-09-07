@@ -1,0 +1,34 @@
+# Ignorer les fichiers inutiles pour le déploiement Railway
+
+.git/
+.gitignore
+_.md
+README.md
+.vscode/
+.idea/
+_.iml
+.DS_Store
+
+# Fichiers de développement
+
+src/test/
+_.log
+_.tmp
+
+# Fichiers Maven non nécessaires
+
+.mvn/
+mvnw
+mvnw.cmd
+pom.xml.backup
+
+# Fichiers temporaires
+
+temp/
+tmp/
+\*.temp
+
+# Fichiers de configuration locale
+
+application-local.properties
+application-dev.properties
