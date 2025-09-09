@@ -165,13 +165,11 @@ public class EventService {
         }
     }
 
-    // Validation spécifique pour update : on autorise la modification d'événements
-    // passés
     private void validateEventDatesForUpdate(LocalDateTime start, LocalDateTime end) {
         if (end.isBefore(start)) {
             throw new ValidationException("La date de fin doit être après la date de début");
         }
-        
+
     }
 
     private EventDto convertToDto(Event event) {
