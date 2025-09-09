@@ -86,7 +86,7 @@ public class EventService {
         Map<LocalDate, List<Task>> tasksByDate = new HashMap<>();
 
         tasks.stream()
-                .filter(t -> t.getCalendarEvent() == null) // Éviter les doublons
+                .filter(t -> t.getCalendarEvent() == null)
                 .forEach(task -> {
                     if (task.getDueDate() != null) {
                         LocalDate taskDate = task.getDueDate().toLocalDate();
@@ -135,7 +135,7 @@ public class EventService {
         Event event = eventRepository.findByIdAndUserId(eventId, user.getId())
                 .orElseThrow(() -> new RuntimeException("Événement non trouvé"));
 
-        validateEventDates(request.getStartDate(), request.getEndDate());
+        validateEventDatesForUpdate(request.getStartDate(), request.getEndDate());
 
         event.setTitle(request.getTitle());
         event.setDescription(request.getDescription());
@@ -163,6 +163,15 @@ public class EventService {
         if (start.isBefore(LocalDateTime.now().minusHours(1))) {
             throw new ValidationException("Impossible de créer un événement dans le passé");
         }
+    }
+
+    // Validation spécifique pour update : on autorise la modification d'événements
+    // passés
+    private void validateEventDatesForUpdate(LocalDateTime start, LocalDateTime end) {
+        if (end.isBefore(start)) {
+            throw new ValidationException("La date de fin doit être après la date de début");
+        }
+        
     }
 
     private EventDto convertToDto(Event event) {
