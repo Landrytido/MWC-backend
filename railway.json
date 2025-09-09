@@ -4,6 +4,7 @@
         "builder": "NIXPACKS"
     },
     "deploy": {
+        "startCommand": "java -jar target/backend-spring-0.0.1-SNAPSHOT.jar",
         "numReplicas": 1,
         "sleepApplication": false,
         "restartPolicyType": "ON_FAILURE"
