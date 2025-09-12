@@ -2,6 +2,7 @@ package com.mywebcompanion.backendspring.controller;
 
 import com.mywebcompanion.backendspring.dto.*;
 import com.mywebcompanion.backendspring.service.EventService;
+import com.mywebcompanion.backendspring.service.TaskService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import java.util.List;
 public class CalendarController {
 
     private final EventService eventService;
+    private final TaskService taskService;
 
     @GetMapping("/month/{year}/{month}")
     public ResponseEntity<List<CalendarViewDto>> getMonthlyView(
@@ -81,5 +83,14 @@ public class CalendarController {
         String email = userDetails.getUsername();
         CalendarViewDto dayView = eventService.getDayView(email, date);
         return ResponseEntity.ok(dayView);
+    }
+
+    @PostMapping("/create-task")
+    public ResponseEntity<TaskDto> createTaskFromCalendar(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody CreateTaskRequest request) {
+        String email = userDetails.getUsername();
+        TaskDto task = taskService.createTask(email, request);
+        return ResponseEntity.ok(task);
     }
 }

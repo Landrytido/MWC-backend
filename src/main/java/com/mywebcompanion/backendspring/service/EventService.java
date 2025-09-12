@@ -160,9 +160,12 @@ public class EventService {
         if (end.isBefore(start)) {
             throw new ValidationException("La date de fin doit être après la date de début");
         }
-        if (start.isBefore(LocalDateTime.now().minusHours(1))) {
-            throw new ValidationException("Impossible de créer un événement dans le passé");
-        }
+        // Commenté temporairement pour permettre la création d'événements dans le passé
+        // récent
+        // if (start.isBefore(LocalDateTime.now().minusHours(1))) {
+        // throw new ValidationException("Impossible de créer un événement dans le
+        // passé");
+        // }
     }
 
     private void validateEventDatesForUpdate(LocalDateTime start, LocalDateTime end) {
