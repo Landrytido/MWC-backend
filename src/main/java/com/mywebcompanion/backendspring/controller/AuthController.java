@@ -3,7 +3,6 @@ package com.mywebcompanion.backendspring.controller;
 import com.mywebcompanion.backendspring.dto.*;
 import com.mywebcompanion.backendspring.service.AuthService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 
@@ -20,7 +19,6 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Slf4j
 public class AuthController {
 
     private final AuthService authService;
@@ -34,7 +32,6 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("error", "Utilisateur déjà existant", "message", e.getMessage()));
         } catch (Exception e) { // 👈 GARDEZ ÇA pour les autres erreurs
-            log.error("Erreur inattendue lors de l'inscription", e); // Optionnel pour debug
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Erreur interne du serveur", "message",
                             "Une erreur inattendue s'est produite"));

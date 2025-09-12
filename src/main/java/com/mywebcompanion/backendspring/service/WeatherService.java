@@ -2,7 +2,6 @@ package com.mywebcompanion.backendspring.service;
 
 import com.mywebcompanion.backendspring.dto.weather.*;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -19,7 +18,6 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class WeatherService {
 
     @Value("${weather.api.key:}")
@@ -53,7 +51,6 @@ public class WeatherService {
             return mapToCurrentWeather(response);
 
         } catch (HttpClientErrorException e) {
-            log.error("Erreur API météo: {}", e.getMessage());
             if (e.getStatusCode().value() == 400) {
                 throw new RuntimeException("LOCATION_NOT_FOUND");
             }
@@ -84,7 +81,6 @@ public class WeatherService {
             return mapToForecast(response);
 
         } catch (HttpClientErrorException e) {
-            log.error("Erreur API météo: {}", e.getMessage());
             if (e.getStatusCode().value() == 400) {
                 throw new RuntimeException("LOCATION_NOT_FOUND");
             }
@@ -115,7 +111,6 @@ public class WeatherService {
             return mapToLocations(response);
 
         } catch (HttpClientErrorException e) {
-            log.error("Erreur API météo: {}", e.getMessage());
             if (e.getStatusCode().value() == 400) {
                 throw new RuntimeException("LOCATION_NOT_FOUND");
             }
@@ -147,7 +142,6 @@ public class WeatherService {
             return mapToCurrentWeather(response);
 
         } catch (HttpClientErrorException e) {
-            log.error("Erreur API météo avec coordonnées lat={}, lon={}: {}", lat, lon, e.getMessage());
             if (e.getStatusCode().value() == 400) {
                 throw new RuntimeException("INVALID_COORDINATES");
             }
@@ -179,7 +173,6 @@ public class WeatherService {
             return mapToForecast(response);
 
         } catch (HttpClientErrorException e) {
-            log.error("Erreur API météo avec coordonnées lat={}, lon={}: {}", lat, lon, e.getMessage());
             if (e.getStatusCode().value() == 400) {
                 throw new RuntimeException("INVALID_COORDINATES");
             }
