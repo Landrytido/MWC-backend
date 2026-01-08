@@ -28,9 +28,6 @@ public class WeatherService {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    /**
-     * Obtient la météo actuelle pour une localisation
-     */
     public WeatherResponseDto getCurrentWeather(String location) {
         try {
             if (apiKey.isEmpty()) {
@@ -58,9 +55,6 @@ public class WeatherService {
         }
     }
 
-    /**
-     * Obtient les prévisions météo pour plusieurs jours
-     */
     public ForecastResponseDto getForecast(String location, int days) {
         try {
             if (apiKey.isEmpty()) {
@@ -88,9 +82,6 @@ public class WeatherService {
         }
     }
 
-    /**
-     * Recherche des villes
-     */
     public List<LocationDto> searchLocations(String query) {
         try {
             if (apiKey.isEmpty()) {
@@ -118,9 +109,6 @@ public class WeatherService {
         }
     }
 
-    /**
-     * Obtient la météo actuelle pour des coordonnées GPS
-     */
     public WeatherResponseDto getCurrentWeatherByCoordinates(double lat, double lon) {
         try {
             if (apiKey.isEmpty()) {
@@ -149,9 +137,6 @@ public class WeatherService {
         }
     }
 
-    /**
-     * Obtient les prévisions météo pour des coordonnées GPS
-     */
     public ForecastResponseDto getForecastByCoordinates(double lat, double lon, int days) {
         try {
             if (apiKey.isEmpty()) {
@@ -180,13 +165,11 @@ public class WeatherService {
         }
     }
 
-    // Méthodes de mapping depuis l'API WeatherAPI
     @SuppressWarnings("unchecked")
     private WeatherResponseDto mapToCurrentWeather(Map<String, Object> response) {
         WeatherResponseDto result = new WeatherResponseDto();
         result.setTimestamp(LocalDateTime.now());
 
-        // Location
         Map<String, Object> locationData = (Map<String, Object>) response.get("location");
         LocationDto location = new LocationDto();
         location.setName((String) locationData.get("name"));
@@ -196,7 +179,6 @@ public class WeatherService {
         location.setLon((Double) locationData.get("lon"));
         result.setLocation(location);
 
-        // Current weather
         Map<String, Object> currentData = (Map<String, Object>) response.get("current");
         CurrentWeatherDto current = new CurrentWeatherDto();
         current.setTemperature(((Number) currentData.get("temp_c")).doubleValue());
@@ -220,7 +202,6 @@ public class WeatherService {
     private ForecastResponseDto mapToForecast(Map<String, Object> response) {
         ForecastResponseDto result = new ForecastResponseDto();
 
-        // Location (même logique que current)
         Map<String, Object> locationData = (Map<String, Object>) response.get("location");
         LocationDto location = new LocationDto();
         location.setName((String) locationData.get("name"));
@@ -230,7 +211,6 @@ public class WeatherService {
         location.setLon((Double) locationData.get("lon"));
         result.setLocation(location);
 
-        // Forecast
         Map<String, Object> forecastData = (Map<String, Object>) response.get("forecast");
         List<Map<String, Object>> forecastDays = (List<Map<String, Object>>) forecastData.get("forecastday");
 
