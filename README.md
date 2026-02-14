@@ -33,8 +33,8 @@ WEATHER_API_KEY=your-weatherapi-key
 3. **Lancer l'application**
 
 ```bash
-# Windows
-mvnw.cmd spring-boot:run
+# Windows (PowerShell)
+.\mvnw.cmd spring-boot:run
 
 # Linux/Mac
 ./mvnw spring-boot:run
