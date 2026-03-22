@@ -279,10 +279,11 @@ public class TaskService {
 
     public Map<String, Object> getUserTaskSummary(String email) {
         User user = userService.findByEmail(email);
-        Object[] summary = taskRepository.findUserTaskSummary(user.getId());
+        List<Object[]> summaryRows = taskRepository.findUserTaskSummary(user.getId());
+        Object[] summary = (summaryRows != null && !summaryRows.isEmpty()) ? summaryRows.get(0) : null;
 
         Map<String, Object> result = new HashMap<>();
-        if (summary.length > 0) {
+        if (summary != null && summary.length >= 5) {
             result.put("totalTasks", ((Number) summary[0]).longValue());
             result.put("completedTasks", ((Number) summary[1]).longValue());
             result.put("overdueTasks", ((Number) summary[2]).longValue());
