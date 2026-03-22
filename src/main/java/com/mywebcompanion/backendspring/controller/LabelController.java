@@ -1,6 +1,7 @@
 package com.mywebcompanion.backendspring.controller;
 
 import com.mywebcompanion.backendspring.dto.LabelDto;
+import com.mywebcompanion.backendspring.dto.NoteDto;
 import com.mywebcompanion.backendspring.service.LabelService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -71,4 +72,12 @@ public class LabelController {
         return ResponseEntity.ok(labels);
     }
 
+    @GetMapping("/{labelId}/notes")
+    public ResponseEntity<List<NoteDto>> getNotesByLabelId(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable String labelId) {
+        String email = userDetails.getUsername();
+        List<NoteDto> notes = labelService.getNotesByLabelId(email, labelId);
+        return ResponseEntity.ok(notes);
+    }
 }

@@ -26,10 +26,16 @@ public class UserController {
 
             User user = userService.findByEmail(email);
 
-            UserDto responseDto = new UserDto();
-            responseDto.setEmail(user.getEmail());
-            responseDto.setFirstName(user.getFirstName());
-            responseDto.setLastName(user.getLastName());
+            UserDto responseDto = UserDto.builder()
+                    .id(user.getId())
+                    .email(user.getEmail())
+                    .firstName(user.getFirstName())
+                    .lastName(user.getLastName())
+                    .enabled(user.getEnabled())
+                    .emailVerified(user.getEmailVerified())
+                    .createdAt(user.getCreatedAt())
+                    .updatedAt(user.getUpdatedAt())
+                    .build();
 
             return ResponseEntity.ok(responseDto);
         } catch (Exception e) {

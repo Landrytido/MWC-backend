@@ -2,6 +2,7 @@ package com.mywebcompanion.backendspring.service;
 
 import com.mywebcompanion.backendspring.dto.LabelDto;
 import com.mywebcompanion.backendspring.model.Label;
+import com.mywebcompanion.backendspring.dto.NoteDto;
 import com.mywebcompanion.backendspring.model.Note;
 import com.mywebcompanion.backendspring.model.User;
 import com.mywebcompanion.backendspring.repository.LabelRepository;
@@ -122,6 +123,14 @@ public class LabelService {
                 .collect(Collectors.toList());
     }
 
+    public List<NoteDto> getNotesByLabelId(String email, String labelId) {
+        User user = userService.findByEmail(email);
+        List<Note> notes = noteRepository.findByLabelsIdAndUserId(labelId, user.getId());
+        return notes.stream()
+                .map(this::convertNoteToDto)
+                .collect(Collectors.toList());
+    }
+
     private LabelDto convertToDto(Label label) {
         LabelDto dto = new LabelDto();
         dto.setId(label.getId());
@@ -129,6 +138,20 @@ public class LabelService {
         dto.setCreatedAt(label.getCreatedAt());
         dto.setUpdatedAt(label.getUpdatedAt());
         dto.setNoteCount(labelRepository.countNotesByLabelIdAndUserId(label.getId(), label.getUser().getId()));
+        return dto;
+    }
+
+    private NoteDto convertNoteToDto(Note note) {
+        NoteDto dto = new NoteDto();
+        dto.setId(note.getId());
+        dto.setTitle(note.getTitle());
+        dto.setContent(note.getContent());
+        dto.setCreatedAt(note.getCreatedAt());
+        dto.setUpdatedAt(note.getUpdatedAt());
+        if (note.getNotebook() != null) {
+            dto.setNotebookId(note.getNotebook().getId());
+            dto.setNotebookTitle(note.getNotebook().getTitle());
+        }
         return dto;
     }
 }

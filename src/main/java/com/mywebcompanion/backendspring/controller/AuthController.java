@@ -1,20 +1,20 @@
 package com.mywebcompanion.backendspring.controller;
 
 import com.mywebcompanion.backendspring.dto.*;
+import com.mywebcompanion.backendspring.exception.UserAlreadyExistsException;
 import com.mywebcompanion.backendspring.service.AuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
-import java.util.Map;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
-import com.mywebcompanion.backendspring.exception.UserAlreadyExistsException;
 
-import jakarta.validation.Valid;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -31,7 +31,7 @@ public class AuthController {
         } catch (UserAlreadyExistsException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("error", "Utilisateur déjà existant", "message", e.getMessage()));
-        } catch (Exception e) { // 👈 GARDEZ ÇA pour les autres erreurs
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Erreur interne du serveur", "message",
                             "Une erreur inattendue s'est produite"));
@@ -66,8 +66,7 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(@RequestHeader("Authorization") String token) {
         if (token == null || !token.startsWith("Bearer ")) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Token invalide"));
+            return ResponseEntity.badRequest().body(Map.of("error", "Token invalide"));
         }
 
         String jwtToken = token.substring(7);
@@ -80,5 +79,13 @@ public class AuthController {
     public ResponseEntity<String> verifyEmail(@RequestParam String token) {
         authService.verifyEmail(token);
         return ResponseEntity.ok("Email vérifié avec succès");
+    }
+
+    @GetMapping("/verify")
+    public ResponseEntity<Void> verify(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok().build();
     }
 }
