@@ -62,7 +62,7 @@ My Web Companion est une application d'assistant personnel web permettant de gé
 - id (PK)
 - title, description
 - dueDate
-- priority (1, 2, 3)
+- priority (1=Basse, 2=Moyenne, 3=Haute)
 - completed, completedAt
 - carriedOver, orderIndex
 - user_id (FK)
@@ -528,10 +528,27 @@ erDiagram
 
 ### Règles de validation
 
-- **Task.priority** : 1 (basse), 2 (moyenne), 3 (haute)
+- **Task.priority** : 
+  - `1` = Basse ⬜ (grise)
+  - `2` = Moyenne 🟦 (bleue)  
+  - `3` = Haute 🔴 (rouge)
 - **Event.mode** : PRESENTIEL | DISTANCIEL
 - **Event.type** : EVENT | TASK_BASED
 - **Forecast.days** : 1-10 jours max
+
+---
+
+## 📋 Dictionnaire des données - Énumérées critiques
+
+### Priorité de Tâche (TASK.priority)
+
+| Valeur | Label | Signification | Usage |
+|--------|-------|---------------|-------|
+| 1 | Basse | Tâche non urgente | À faire au moment opportun |
+| 2 | Moyenne | Tâche standard | À faire rapidement |
+| 3 | Haute | Tâche urgente | À faire en priorité |
+
+**Remarque importante** : Ce système **1-2-3** est le **SEUL système de priorité utilisé** dans l'application (backend, frontend, données). Tout autre système serait **non conforme** et créerait une incohérence.
 
 ---
 

@@ -1,8 +1,10 @@
 package com.mywebcompanion.backendspring.controller;
 
 import com.mywebcompanion.backendspring.dto.UserDto;
+import com.mywebcompanion.backendspring.dto.UpdatePasswordRequest;
 import com.mywebcompanion.backendspring.model.User;
 import com.mywebcompanion.backendspring.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -74,5 +76,21 @@ public class UserController {
                 .build();
 
         return ResponseEntity.ok(responseDto);
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<?> changePassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody UpdatePasswordRequest request) {
+        try {
+            String email = userDetails.getUsername();
+            userService.changePassword(email, request);
+
+            return ResponseEntity.ok(Map.of(
+                    "message", "Mot de passe mis à jour avec succès"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", e.getMessage()));
+        }
     }
 }
